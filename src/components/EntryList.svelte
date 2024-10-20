@@ -3,6 +3,9 @@
 @description  EntryList component to display collections.
 -->
 <script lang="ts">
+	import { run, createBubbler } from 'svelte/legacy';
+
+	const bubble = createBubbler();
 	import { browser } from '$app/environment';
 
 	// Utils
@@ -51,19 +54,19 @@
 		displayTableHeaders = event.detail.items;
 	}
 
-	let isLoading = false;
+	let isLoading = $state(false);
 	let loadingTimer: any; // recommended time of around 200-300ms
 
 	// Buttons
-	let globalSearchValue = '';
-	let expand = false;
-	let filterShow = false;
-	let columnShow = false;
+	let globalSearchValue = $state('');
+	let expand = $state(false);
+	let filterShow = $state(false);
+	let columnShow = $state(false);
 
 	// Retrieve entryListPaginationSettings from local storage or set default values for each collection
 	const entryListPaginationSettingsKey = `entryListPaginationSettings_${$collection.name}`;
 	let entryListPaginationSettings: any =
-		browser && localStorage.getItem(entryListPaginationSettingsKey)
+		$state(browser && localStorage.getItem(entryListPaginationSettingsKey)
 			? JSON.parse(localStorage.getItem(entryListPaginationSettingsKey) as string)
 			: {
 					collectionName: $collection.name,
@@ -73,33 +76,33 @@
 					rowsPerPage: 10,
 					filters: {},
 					displayTableHeaders: []
-				};
+				});
 
-	let density: string = entryListPaginationSettings.density || 'normal'; // Retrieve density from local storage or set to 'normal' if it doesn't exist
-	let selectAllColumns = true; // Initialize to true to show all columns by default
+	let density: string = $state(entryListPaginationSettings.density || 'normal'); // Retrieve density from local storage or set to 'normal' if it doesn't exist
+	let selectAllColumns = $state(true); // Initialize to true to show all columns by default
 
-	let data: { entryList: [any]; pagesCount: number } | undefined;
-	let tableHeaders: Array<{ label: string; name: string }> = [];
-	let tableData: any[] = [];
+	let data: { entryList: [any]; pagesCount: number } | undefined = $state();
+	let tableHeaders: Array<{ label: string; name: string }> = $state([]);
+	let tableData: any[] = $state([]);
 
 	// Initialize displayTableHeaders with the values from entryListPaginationSettings or default to tableHeaders
 	let displayTableHeaders: { label: string; name: string; id: string; visible: boolean }[] =
-		entryListPaginationSettings.displayTableHeaders.length > 0
+		$state(entryListPaginationSettings.displayTableHeaders.length > 0
 			? entryListPaginationSettings.displayTableHeaders
-			: tableHeaders.map((header) => ({ ...header, visible: true }));
+			: tableHeaders.map((header) => ({ ...header, visible: true })));
 
 	// Tick row logic
-	let SelectAll = false;
-	const selectedMap: { [key: string]: boolean } = {};
+	let SelectAll = $state(false);
+	const selectedMap: { [key: string]: boolean } = $state({});
 
 	// Filter
-	let filters: { [key: string]: string } = entryListPaginationSettings.filters || {};
+	let filters: { [key: string]: string } = $state(entryListPaginationSettings.filters || {});
 	const waitFilter = debounce(300); // Debounce filter function for 300ms
 
 	// Pagination
-	let pagesCount: number = entryListPaginationSettings.pagesCount || 1; // Initialize pagesCount
-	let currentPage: number = entryListPaginationSettings.currentPage || 1; // Set initial currentPage value
-	let rowsPerPage: number = entryListPaginationSettings.rowsPerPage || 10; // Set initial rowsPerPage value
+	let pagesCount: number = $state(entryListPaginationSettings.pagesCount || 1); // Initialize pagesCount
+	let currentPage: number = $state(entryListPaginationSettings.currentPage || 1); // Set initial currentPage value
+	let rowsPerPage: number = $state(entryListPaginationSettings.rowsPerPage || 10); // Set initial rowsPerPage value
 	const rowsPerPageOptions = [5, 10, 25, 50, 100, 500]; // Set initial rowsPerPage value options
 
 	// Declare isFirstPage and isLastPage variables
@@ -234,44 +237,8 @@
 		}
 	}
 
-	// React to changes in density setting and update local storage for each collection
-	$: {
-		entryListPaginationSettings = {
-			...entryListPaginationSettings,
-			collectionName: $collection.name,
-			filters,
-			sorting,
-			density,
-			currentPage,
-			rowsPerPage,
-			displayTableHeaders
-		};
-		browser && localStorage.setItem(entryListPaginationSettingsKey, JSON.stringify(entryListPaginationSettings)); // Update local storage using the entryListPaginationSettingsKey
-	}
 
-	$: {
-		tableHeaders = displayTableHeaders.filter((header) => header.visible);
-	}
 
-	// Trigger refreshTableData based on collection, filters, sorting, and currentPage
-	$: {
-		refreshTableData();
-		$collection;
-		filters;
-		sorting;
-		currentPage;
-	}
-	// Trigger refreshTableData when contentLanguage changes, but don't fetch data
-	$: {
-		refreshTableData(false);
-		filters = {};
-		$contentLanguage;
-	}
-	// Reset currentPage to 1 when the collection changes
-	$: {
-		currentPage = 1;
-		$collection;
-	}
 
 	// Tick All Rows
 	function process_selectAll(selectAll: boolean) {
@@ -288,11 +255,7 @@
 		}
 	}
 
-	// Update Tick All Rows
-	$: process_selectAll(SelectAll);
 
-	// Update Tick Single Row
-	$: Object.values(selectedMap).includes(true) ? mode.set('modify') : mode.set('view');
 
 	// Reset collectionValue when mode changes
 	mode.subscribe(() => {
@@ -304,12 +267,12 @@
 
 	// Columns Sorting
 	let sorting: { sortedBy: string; isSorted: 0 | 1 | -1 } =
-		browser && localStorage.getItem('sorting')
+		$state(browser && localStorage.getItem('sorting')
 			? JSON.parse(localStorage.getItem('sorting') as string)
 			: {
 					sortedBy: tableData.length > 0 ? Object.keys(tableData[0])[0] : '', // Set default sortedBy based on first key in tableData (if available)
 					isSorted: 1 // 1 for ascending order, -1 for descending order and 0 for not sorted
-				};
+				});
 
 	// Tick Row - modify STATUS of an Entry
 	$modifyEntry = async (status: keyof typeof statusMap) => {
@@ -389,7 +352,51 @@
 		}
 	};
 
-	$: isCollectionEmpty = tableData.length === 0;
+	// Trigger refreshTableData when contentLanguage changes, but don't fetch data
+	run(() => {
+		refreshTableData(false);
+		filters = {};
+		$contentLanguage;
+	});
+	// Reset currentPage to 1 when the collection changes
+	run(() => {
+		currentPage = 1;
+		$collection;
+	});
+	// React to changes in density setting and update local storage for each collection
+	run(() => {
+		entryListPaginationSettings = {
+			...entryListPaginationSettings,
+			collectionName: $collection.name,
+			filters,
+			sorting,
+			density,
+			currentPage,
+			rowsPerPage,
+			displayTableHeaders
+		};
+		browser && localStorage.setItem(entryListPaginationSettingsKey, JSON.stringify(entryListPaginationSettings)); // Update local storage using the entryListPaginationSettingsKey
+	});
+	run(() => {
+		tableHeaders = displayTableHeaders.filter((header) => header.visible);
+	});
+	// Trigger refreshTableData based on collection, filters, sorting, and currentPage
+	run(() => {
+		refreshTableData();
+		$collection;
+		filters;
+		sorting;
+		currentPage;
+	});
+	// Update Tick All Rows
+	run(() => {
+		process_selectAll(SelectAll);
+	});
+	// Update Tick Single Row
+	run(() => {
+		Object.values(selectedMap).includes(true) ? mode.set('modify') : mode.set('view');
+	});
+	let isCollectionEmpty = $derived(tableData.length === 0);
 </script>
 
 <!--Table -->
@@ -404,11 +411,11 @@
 			{#if $sidebarState.left === 'hidden'}
 				<button
 					type="button"
-					on:keydown
-					on:click={() => toggleSidebar('left', get(screenSize) === 'lg' ? 'full' : 'collapsed')}
+					onkeydown={bubble('keydown')}
+					onclick={() => toggleSidebar('left', get(screenSize) === 'lg' ? 'full' : 'collapsed')}
 					class="variant-ghost-surface btn-icon mt-1"
 				>
-					<iconify-icon icon="mingcute:menu-fill" width="24" />
+					<iconify-icon icon="mingcute:menu-fill" width="24"></iconify-icon>
 				</button>
 			{/if}
 			<!-- Collection type with icon -->
@@ -419,7 +426,7 @@
 					</div>
 				{/if}
 				<div class="-mt-2 flex justify-start text-sm font-bold uppercase dark:text-white md:text-2xl lg:text-xl">
-					{#if $collection.icon}<span> <iconify-icon icon={$collection.icon} width="24" class="mr-1 text-error-500 sm:mr-2" /></span>{/if}
+					{#if $collection.icon}<span> <iconify-icon icon={$collection.icon} width="24" class="mr-1 text-error-500 sm:mr-2"></iconify-icon></span>{/if}
 					{#if $collection.name}
 						<div class="flex max-w-[65px] whitespace-normal leading-3 sm:mr-2 sm:max-w-none md:mt-0 md:leading-none xs:mt-1">
 							{$collection.name}
@@ -430,8 +437,8 @@
 		</div>
 
 		<!-- Expand/Collapse -->
-		<button type="button" on:keydown on:click={() => (expand = !expand)} class="variant-ghost-surface btn-icon mt-1 sm:hidden">
-			<iconify-icon icon="material-symbols:filter-list-rounded" width="30" />
+		<button type="button" onkeydown={bubble('keydown')} onclick={() => (expand = !expand)} class="variant-ghost-surface btn-icon mt-1 sm:hidden">
+			<iconify-icon icon="material-symbols:filter-list-rounded" width="30"></iconify-icon>
 		</button>
 
 		<!-- Content Language -->
@@ -471,7 +478,7 @@
 							<input
 								type="checkbox"
 								bind:checked={selectAllColumns}
-								on:change={() => {
+								onchange={() => {
 									// Check if all columns are currently visible
 									const allColumnsVisible = displayTableHeaders.every((header) => header.visible);
 
@@ -491,7 +498,7 @@
 						<!-- Clear local storage and reload tableHeader -->
 						<button
 							class="btn"
-							on:click={() => {
+							onclick={() => {
 								// Remove the entryListPaginationSettings from local storage
 								localStorage.removeItem(entryListPaginationSettingsKey);
 
@@ -516,7 +523,7 @@
 								refreshTableData();
 							}}
 						>
-							<iconify-icon icon="material-symbols-light:device-reset" width="30" class="text-tertiary-500" />
+							<iconify-icon icon="material-symbols-light:device-reset" width="30" class="text-tertiary-500"></iconify-icon>
 							Reset
 						</button>
 					</div>
@@ -526,15 +533,15 @@
 							items: displayTableHeaders,
 							flipDurationMs
 						}}
-						on:consider={handleDndConsider}
-						on:finalize={handleDndFinalize}
+						onconsider={handleDndConsider}
+						onfinalize={handleDndFinalize}
 						class="flex flex-wrap justify-center gap-1 rounded-md p-2"
 					>
 						{#each displayTableHeaders as header (header.id)}
 							<button
 								class="chip {header.visible ? 'variant-filled-secondary' : 'variant-ghost-secondary'} w-100 mr-2 flex items-center justify-center"
 								animate:flip={{ duration: flipDurationMs }}
-								on:click={() => {
+								onclick={() => {
 									// Toggle the visibility of the header
 									header.visible = !header.visible;
 
@@ -546,7 +553,7 @@
 								}}
 							>
 								{#if header.visible}
-									<span><iconify-icon icon="fa:check" /></span>
+									<span><iconify-icon icon="fa:check"></iconify-icon></span>
 								{/if}
 								<span class="ml-2 capitalize">{header.name}</span>
 							</button>
@@ -567,12 +574,12 @@
 								{#if Object.keys(filters).length > 0}
 									<button
 										class="variant-outline btn-icon"
-										on:click={() => {
+										onclick={() => {
 											// Clear all filters
 											filters = {};
 										}}
 									>
-										<iconify-icon icon="material-symbols:close" width="24" />
+										<iconify-icon icon="material-symbols:close" width="24"></iconify-icon>
 									</button>
 								{/if}
 							</th>
@@ -609,7 +616,7 @@
 
 						{#each tableHeaders as header}
 							<th
-								on:click={() => {
+								onclick={() => {
 									//sorting
 									sorting = {
 										sortedBy: header.name,
@@ -631,7 +638,7 @@
 								<div class="relative flex items-center justify-center text-center">
 									<!-- TODO: fix if content is translated -->
 									{#if data?.entryList[0]?.translated}
-										<iconify-icon icon="bi:translate" width="14" class="absolute right-0 top-0 text-sm text-white" />
+										<iconify-icon icon="bi:translate" width="14" class="absolute right-0 top-0 text-sm text-white"></iconify-icon>
 										{header.label}
 									{:else}
 										{header.label}
@@ -643,7 +650,7 @@
 										class="origin-center duration-300 ease-in-out"
 										class:up={sorting.isSorted === 1}
 										class:invisible={sorting.isSorted == 0 || sorting.sortedBy != header.label}
-									/>
+									></iconify-icon>
 								</div>
 							</th>
 						{/each}
@@ -657,7 +664,7 @@
 
 							{#each tableHeaders as header}
 								<td
-									on:click={() => {
+									onclick={() => {
 
 										collectionValue.set(data?.entryList[index]);
 										logger.debug("Edit datas: ",`${JSON.stringify(data?.entryList[index])}`);
@@ -700,7 +707,7 @@
 	{:else}
 		<!-- Display a message when no data is yet available -->
 		<div class="text-center text-tertiary-500 dark:text-primary-500">
-			<iconify-icon icon="bi:exclamation-circle-fill" height="44" class="mb-2" />
+			<iconify-icon icon="bi:exclamation-circle-fill" height="44" class="mb-2"></iconify-icon>
 			<p class="text-lg">
 				No {$collection.name} Data
 			</p>

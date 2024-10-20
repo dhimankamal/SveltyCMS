@@ -5,10 +5,14 @@
 
 <script lang="ts">
 	// The status value to display
-	export let value: string;
 
 	// ParaglideJS
 	import * as m from '@src/paraglide/messages';
+	interface Props {
+		value: string;
+	}
+
+	let { value }: Props = $props();
 </script>
 
 <!-- Display different badges for different statuses -->
@@ -26,19 +30,19 @@
 						: 'badge rounded  text-center'} "
 >
 	{#if value.toUpperCase() == 'PUBLISHED'}
-		<iconify-icon icon="bi:hand-thumbs-up-fill" width="20" class=" mx-auto" />
+		<iconify-icon icon="bi:hand-thumbs-up-fill" width="20" class=" mx-auto"></iconify-icon>
 		<p class="hidden sm:block">{m.entrylist_multibutton_publish()}</p>
 	{:else if value.toUpperCase() == 'UNPUBLISHED'}
-		<iconify-icon icon="bi:pause-circle" width="20" class="mx-auto" />
+		<iconify-icon icon="bi:pause-circle" width="20" class="mx-auto"></iconify-icon>
 		<p class="hidden sm:block">{m.entrylist_multibutton_unpublish()}</p>
 	{:else if value.toUpperCase() == 'SCHEDULE'}
-		<iconify-icon icon="bi:clock" width="20" class="mx-auto" />
+		<iconify-icon icon="bi:clock" width="20" class="mx-auto"></iconify-icon>
 		<p class="hidden sm:block">{m.entrylist_multibutton_schedule()}</p>
 	{:else if value.toUpperCase() == 'CLONE'}
-		<iconify-icon icon="bi:clipboard-data-fill" width="20" class="mx-auto" />
+		<iconify-icon icon="bi:clipboard-data-fill" width="20" class="mx-auto"></iconify-icon>
 		<p class="hidden sm:block">{m.entrylist_multibutton_clone()}</p>
 	{:else if value.toUpperCase() == 'TESTING'}
-		<iconify-icon icon="icon-park-outline:preview-open" width="20" class="mx-auto" />
+		<iconify-icon icon="icon-park-outline:preview-open" width="20" class="mx-auto"></iconify-icon>
 		<p class="hidden sm:block">{m.entrylist_multibutton_testing()}</p>
 	{/if}
 </div>

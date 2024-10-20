@@ -12,8 +12,12 @@
 	const toastStore = getToastStore();
 
 	// Define variables
-	export let currentFolder: { _id: string; name: string; path: string[] } | null = null;
-	let folders: { _id: string; name: string; path: string[]; parent?: string | null }[] = [];
+	interface Props {
+		currentFolder?: { _id: string; name: string; path: string[] } | null;
+	}
+
+	let { currentFolder = null }: Props = $props();
+	let folders: { _id: string; name: string; path: string[]; parent?: string | null }[] = $state([]);
 	let newFolderName = '';
 
 	// Function to fetch virtual folders
@@ -157,16 +161,16 @@
 		{#each folders.filter((f) => !currentFolder || f.parent === currentFolder._id) as folder (folder._id)}
 			<div class="btn-group">
 				<!-- Folder Button -->
-				<button on:click={() => openFolder(folder._id)} class="btn">
-					<iconify-icon icon="mdi:folder" width="28" class="text-yellow-500" />
+				<button onclick={() => openFolder(folder._id)} class="btn">
+					<iconify-icon icon="mdi:folder" width="28" class="text-yellow-500"></iconify-icon>
 					<span class="flex-1 overflow-hidden text-ellipsis text-left text-sm">{folder.name}</span>
 				</button>
 				<!-- Edit and Delete buttons -->
 				<div class="absolute right-0 top-0 flex">
-					<button on:click={() => updateFolder(folder._id, prompt('Enter new folder name', folder.name) || folder.name)} class="btn">
-						<iconify-icon icon="mdi:pencil" width="18" class="text-white" />
+					<button onclick={() => updateFolder(folder._id, prompt('Enter new folder name', folder.name) || folder.name)} class="btn">
+						<iconify-icon icon="mdi:pencil" width="18" class="text-white"></iconify-icon>
 					</button>
-					<button on:click={() => deleteFolder(folder._id)} class="btn"> <iconify-icon icon="mdi:delete" width="18" class="text-white" /> </button>
+					<button onclick={() => deleteFolder(folder._id)} class="btn"> <iconify-icon icon="mdi:delete" width="18" class="text-white"></iconify-icon> </button>
 				</div>
 			</div>
 		{/each}

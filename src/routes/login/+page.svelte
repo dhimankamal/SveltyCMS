@@ -2,6 +2,8 @@
 @description Login page -->
 
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { publicEnv } from '@root/config/public';
 	import type { PageData } from './$types';
 
@@ -18,7 +20,7 @@
 
 	const _languageTag = languageTag(); // Get the current language tag
 
-	let inputlanguagevalue = '';
+	let inputlanguagevalue = $state('');
 	// Use the inferred return type of languageTag
 	type LanguageCode = ReturnType<typeof languageTag>;
 
@@ -28,12 +30,17 @@
 		systemLanguage.set(selectedLanguage);
 	}
 
-	$: filteredLanguages = publicEnv.AVAILABLE_SYSTEM_LANGUAGES.filter((value: string) => (value ? value.includes(inputlanguagevalue) : true));
+	let filteredLanguages;
+	run(() => {
+		filteredLanguages = publicEnv.AVAILABLE_SYSTEM_LANGUAGES.filter((value: string) => (value ? value.includes(inputlanguagevalue) : true));
+	});
 
 	// Ensure all available languages are included
-	$: if (!inputlanguagevalue) {
-		filteredLanguages = publicEnv.AVAILABLE_SYSTEM_LANGUAGES;
-	}
+	run(() => {
+		if (!inputlanguagevalue) {
+			filteredLanguages = publicEnv.AVAILABLE_SYSTEM_LANGUAGES;
+		}
+	});
 
 	// Access package version from environment variable
 	// @ts-expect-error reading from vite.config.js
@@ -44,15 +51,18 @@
 	const firstUserExists = pageData.firstUserExists;
 
 	// Set initial active state based on firstUserExists
-	let active: undefined | 0 | 1 = firstUserExists ? undefined : 1;
-	let background: 'white' | '#242728' = firstUserExists ? 'white' : '#242728';
-
-	export let data: PageData;
+	let active: undefined | 0 | 1 = $state(firstUserExists ? undefined : 1);
+	let background: 'white' | '#242728' = $state(firstUserExists ? 'white' : '#242728');
 
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
+	interface Props {
+		data: PageData;
+	}
 
-	let timeRemaining: { minutes: number; seconds: number } = { minutes: 0, seconds: 0 };
+	let { data }: Props = $props();
+
+	let timeRemaining: { minutes: number; seconds: number } = $state({ minutes: 0, seconds: 0 });
 	let interval: ReturnType<typeof setInterval>;
 
 	// Function to calculate the time remaining until the next reset
@@ -147,7 +157,7 @@
 					type="text"
 					list="locales"
 					bind:value={inputlanguagevalue}
-					on:input={handleLanguageSelection}
+					oninput={handleLanguageSelection}
 					placeholder={_languageTag}
 					aria-label="Enter Language"
 					class="w-1/2 rounded-full border-2 bg-[#242728] uppercase text-white placeholder:text-white focus:ring-2"

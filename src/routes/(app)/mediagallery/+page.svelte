@@ -23,6 +23,7 @@ It provides a user-friendly interface for searching, filtering, and navigating t
 	import Filter from './Filter.svelte';
 	import MediaGrid from './MediaGrid.svelte';
 	import MediaTable from './MediaTable.svelte';
+
 	// Skeleton
 	import { getToastStore, getModalStore } from '@skeletonlabs/skeleton';
 	import type { ModalSettings } from '@skeletonlabs/skeleton';
@@ -370,6 +371,17 @@ It provides a user-friendly interface for searching, filtering, and navigating t
 		{ value: 'RemoteVideo', icon: 'mdi:video-remote' }
 	];
 
+
+	  // Create a custom function to render media type options
+	  function renderMediaTypeOption(type) {
+        return `
+            <div class="flex items-center gap-2">
+                ${type.icon ? `<iconify-icon icon="${type.icon}" width="24" class="text-primary-500"></iconify-icon>` : ''}
+                <span class="uppercase">${type.value}</span>
+            </div>
+        `;
+    }
+
 	// Reactive statement to filter files
 	$: filteredFiles = files.filter((file) => {
 		if (file.type === MediaTypeEnum.Image) {
@@ -432,10 +444,7 @@ It provides a user-friendly interface for searching, filtering, and navigating t
 				<select id="mediaType" bind:value={selectedMediaType} class="input">
 					{#each mediaTypes as type}
 						<option value={type.value}>
-							<p class="flex items-center gap-2">
-								<iconify-icon icon={type.icon} width="24" class="text-primary-500" />
-								<span class="uppercase">{type.value}</span>
-							</p>
+							{@html renderMediaTypeOption(type)}
 						</option>
 					{/each}
 				</select>
@@ -522,10 +531,7 @@ It provides a user-friendly interface for searching, filtering, and navigating t
 				<select id="mediaTypeMd" bind:value={selectedMediaType}>
 					{#each mediaTypes as type}
 						<option value={type.value}>
-							<p class="flex items-center justify-between gap-2">
-								<iconify-icon icon={type.icon} width="24" class="mr-2 text-primary-500" />
-								<span class="uppercase">{type.value}</span>
-							</p>
+							{@html renderMediaTypeOption(type)}
 						</option>
 					{/each}
 				</select>

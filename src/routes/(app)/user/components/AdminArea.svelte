@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import type { PageData } from '../$types';
 	import { writable } from 'svelte/store';
 	import { asAny, debounce } from '@utils/utils';
@@ -26,7 +28,6 @@
 	const modalStore = getModalStore();
 	import type { ModalComponent, ModalSettings } from '@skeletonlabs/skeleton';
 
-	export let data: PageData;
 
 	// Use data.manageUsersPermissionConfig directly
 	const manageUsersPermissionConfig = data.manageUsersPermissionConfig;
@@ -50,8 +51,8 @@
 		modalStore.trigger(d);
 	}
 
-	let showUserList = false;
-	let showUsertoken = false;
+	let showUserList = $state(false);
+	let showUsertoken = $state(false);
 
 	// Svelte-dnd-action
 	import { flip } from 'svelte/animate';
@@ -67,7 +68,7 @@
 		displayTableHeaders = event.detail.items;
 	}
 
-	let isLoading = false;
+	let isLoading = $state(false);
 	let loadingTimer: any; // recommended time of around 200-300ms
 
 	function toggleUserList() {
@@ -107,12 +108,12 @@
 		{ label: m.adminarea_updatedat(), key: 'updatedAt' }
 	];
 
-	let globalSearchValue = '';
-	let searchShow = false;
-	let filterShow = false;
-	let columnShow = false;
+	let globalSearchValue = $state('');
+	let searchShow = $state(false);
+	let filterShow = $state(false);
+	let columnShow = $state(false);
 
-	let userPaginationSettings: any = localStorage.getItem('userPaginationSettings')
+	let userPaginationSettings: any = $state(localStorage.getItem('userPaginationSettings')
 		? JSON.parse(localStorage.getItem('userPaginationSettings') as string)
 		: {
 				density: 'normal',
@@ -121,32 +122,37 @@
 				rowsPerPage: 10,
 				filters: {},
 				displayTableHeaders: []
-			};
+			});
 
-	let density: string = userPaginationSettings.density || 'normal';
-	let selectAllColumns = true;
+	let density: string = $state(userPaginationSettings.density || 'normal');
+	let selectAllColumns = $state(true);
 
-	export let selectedRows: any[] = [];
+	interface Props {
+		data: PageData;
+		selectedRows?: any[];
+	}
 
-	let tableHeaders: Array<{ label: string; name: string }> = [];
-	let tableData: any[] = [];
+	let { data, selectedRows = [] }: Props = $props();
+
+	let tableHeaders: Array<{ label: string; name: string }> = $state([]);
+	let tableData: any[] = $state([]);
 	const tableDataUserToken: any[] = [];
 
 	let displayTableHeaders: { label: string; name: string; id: string; visible: boolean }[] =
-		userPaginationSettings.displayTableHeaders.length > 0
+		$state(userPaginationSettings.displayTableHeaders.length > 0
 			? userPaginationSettings.displayTableHeaders
-			: tableData.map((header) => ({ ...header, visible: true }));
+			: tableData.map((header) => ({ ...header, visible: true })));
 
-	let SelectAll = false;
-	const selectedMap = writable({});
+	let SelectAll = $state(false);
+	const selectedMap = $state(writable({}));
 
-	let filters: { [key: string]: string } = userPaginationSettings.filters || {};
-	let filteredTableData: any[] = [];
+	let filters: { [key: string]: string } = $state(userPaginationSettings.filters || {});
+	let filteredTableData: any[] = $state([]);
 	const waitFilter = debounce(300);
 
-	let pagesCount: number = userPaginationSettings.pagesCount || 1;
-	let currentPage: number = userPaginationSettings.currentPage || 1;
-	let rowsPerPage: number = userPaginationSettings.rowsPerPage || 10;
+	let pagesCount: number = $state(userPaginationSettings.pagesCount || 1);
+	let currentPage: number = $state(userPaginationSettings.currentPage || 1);
+	let rowsPerPage: number = $state(userPaginationSettings.rowsPerPage || 10);
 	const rowsPerPageOptions = [2, 10, 25, 50, 100, 500];
 
 	async function refreshTableData() {
@@ -214,29 +220,14 @@
 	}
 	refreshTableData();
 
-	$: {
-		userPaginationSettings = { ...userPaginationSettings, filters, sorting, density, currentPage, rowsPerPage, displayTableHeaders };
-		localStorage.setItem('userPaginationSettings', JSON.stringify(userPaginationSettings));
-	}
 
-	$: {
-		filteredTableData = tableData.filter((item) => {
-			return Object.entries(item).some(([key, value]) => {
-				if (filters[key]) {
-					return (value as string).toString().toLowerCase().includes(filters[key].toLowerCase());
-				} else {
-					return true;
-				}
-			});
-		});
-	}
 
-	let sorting: { sortedBy: string; isSorted: 0 | 1 | -1 } = localStorage.getItem('sorting')
+	let sorting: { sortedBy: string; isSorted: 0 | 1 | -1 } = $state(localStorage.getItem('sorting')
 		? JSON.parse(localStorage.getItem('sorting') as string)
 		: {
 				sortedBy: tableData.length > 0 ? Object.keys(tableData[0])[0] : '',
 				isSorted: 1
-			};
+			});
 
 	function process_selectAll(selectAll: boolean) {
 		if (selectAll) {
@@ -250,17 +241,34 @@
 		}
 	}
 
-	$: process_selectAll(SelectAll);
 
-	$: {
-		tableHeaders = displayTableHeaders.filter((header) => header.visible);
-	}
 
 	let currentAction = null;
 
 	function handleCRUDAction(action: any) {
 		currentAction = action;
 	}
+	run(() => {
+		userPaginationSettings = { ...userPaginationSettings, filters, sorting, density, currentPage, rowsPerPage, displayTableHeaders };
+		localStorage.setItem('userPaginationSettings', JSON.stringify(userPaginationSettings));
+	});
+	run(() => {
+		filteredTableData = tableData.filter((item) => {
+			return Object.entries(item).some(([key, value]) => {
+				if (filters[key]) {
+					return (value as string).toString().toLowerCase().includes(filters[key].toLowerCase());
+				} else {
+					return true;
+				}
+			});
+		});
+	});
+	run(() => {
+		process_selectAll(SelectAll);
+	});
+	run(() => {
+		tableHeaders = displayTableHeaders.filter((header) => header.visible);
+	});
 </script>
 
 <div class="flex flex-col">
@@ -270,20 +278,20 @@
 
 	<PermissionGuard config={manageUsersPermissionConfig}>
 		<div class="flex flex-col flex-wrap items-center justify-evenly gap-2 sm:flex-row xl:justify-between">
-			<button on:click={modalTokenUser} class="gradient-primary btn w-full text-white sm:max-w-xs">
-				<iconify-icon icon="material-symbols:mail" color="white" width="18" class="mr-1" />
+			<button onclick={modalTokenUser} class="gradient-primary btn w-full text-white sm:max-w-xs">
+				<iconify-icon icon="material-symbols:mail" color="white" width="18" class="mr-1"></iconify-icon>
 				<span class="whitespace-normal break-words">{m.adminarea_emailtoken()}</span>
 			</button>
 
 			{#if tableDataUserToken}
-				<button on:click={toggleUserToken} class="gradient-secondary btn w-full text-white sm:max-w-xs">
-					<iconify-icon icon="material-symbols:key-outline" color="white" width="18" class="mr-1" />
+				<button onclick={toggleUserToken} class="gradient-secondary btn w-full text-white sm:max-w-xs">
+					<iconify-icon icon="material-symbols:key-outline" color="white" width="18" class="mr-1"></iconify-icon>
 					<span>{showUsertoken ? m.adminarea_hideusertoken() : m.adminarea_showtoken()}</span>
 				</button>
 			{/if}
 
-			<button on:click={toggleUserList} class="gradient-tertiary btn w-full text-white sm:max-w-xs">
-				<iconify-icon icon="mdi:account-circle" color="white" width="18" class="mr-1" />
+			<button onclick={toggleUserList} class="gradient-tertiary btn w-full text-white sm:max-w-xs">
+				<iconify-icon icon="mdi:account-circle" color="white" width="18" class="mr-1"></iconify-icon>
 				<span>{showUserList ? m.adminarea_hideuserlist() : m.adminarea_showuserlist()}</span>
 			</button>
 		</div>
@@ -323,7 +331,7 @@
 							<input
 								type="checkbox"
 								bind:checked={selectAllColumns}
-								on:change={() => {
+								onchange={() => {
 									const allColumnsVisible = displayTableHeaders.every((header) => header.visible);
 									displayTableHeaders = displayTableHeaders.map((header) => ({
 										...header,
@@ -340,22 +348,22 @@
 								items: displayTableHeaders,
 								flipDurationMs
 							}}
-							on:consider={handleDndConsider}
-							on:finalize={handleDndFinalize}
+							onconsider={handleDndConsider}
+							onfinalize={handleDndFinalize}
 							class="flex flex-wrap justify-center gap-1 rounded-md p-2"
 						>
 							{#each displayTableHeaders as header (header.id)}
 								<button
 									class="chip {header.visible ? 'variant-filled-secondary' : 'variant-ghost-secondary'} w-100 mr-2 flex items-center justify-center"
 									animate:flip={{ duration: flipDurationMs }}
-									on:click={() => {
+									onclick={() => {
 										header.visible = !header.visible;
 										const allColumnsVisible = displayTableHeaders.every((header) => header.visible);
 										selectAllColumns = allColumnsVisible;
 									}}
 								>
 									{#if header.visible}
-										<span><iconify-icon icon="fa:check" /></span>
+										<span><iconify-icon icon="fa:check"></iconify-icon></span>
 									{/if}
 									<span class="ml-2 capitalize">{header.name}</span>
 								</button>
@@ -376,11 +384,11 @@
 									{#if Object.keys(filters).length > 0}
 										<button
 											class="variant-outline btn-icon"
-											on:click={() => {
+											onclick={() => {
 												filters = {};
 											}}
 										>
-											<iconify-icon icon="material-symbols:close" width="24" />
+											<iconify-icon icon="material-symbols:close" width="24"></iconify-icon>
 										</button>
 									{/if}
 								</th>
@@ -416,7 +424,7 @@
 
 							{#each showUserList ? tableHeadersUser : tableHeaderToken as header}
 								<th
-									on:click={() => {
+									onclick={() => {
 										sorting = {
 											sortedBy: header.key,
 											isSorted: (() => {
@@ -443,7 +451,7 @@
 											class="origin-center duration-300 ease-in-out"
 											class:up={sorting.isSorted === 1}
 											class:invisible={sorting.isSorted == 0 || sorting.sortedBy != header.label}
-										/>
+										></iconify-icon>
 									</div>
 								</th>
 							{/each}
@@ -454,7 +462,7 @@
 						{#each filteredTableData as row, index}
 							<tr
 								class="divide-x divide-surface-400"
-								on:click={() => {
+								onclick={() => {
 									handleCRUDAction(row);
 								}}
 							>

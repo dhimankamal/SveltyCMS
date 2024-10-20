@@ -1,19 +1,62 @@
-<script lang="ts">
-	export let type: 'text' | 'password' | 'email' = 'text';
-	export let label = '';
-	export let labelClass = '';
-	export let inputClass = '';
-	export let placeholder = '';
-	export let value = '';
+<!--
+@file src/components/system/inputs/Input.svelte
+@description A reusable input component using Svelte 5 Runes with customizable type, label, and styling.
+-->
 
-	function typeAction(node: HTMLInputElement) {
-		node.type = type;
-	}
+<script lang="ts">
+	import type { Action } from 'svelte/action';
+
+	// Define props with default values and types
+	let {
+		type = 'text',
+		label = '',
+		labelClass = '',
+		inputClass = '',
+		placeholder = '',
+		value = '',
+		name,
+		required,
+		disabled
+	} = $props<{
+		type?: 'text' | 'password' | 'email';
+		label?: string;
+		labelClass?: string;
+		inputClass?: string;
+		placeholder?: string;
+		value?: string;
+		name?: string;
+		required?: boolean;
+		disabled?: boolean;
+	}>();
+
+	// Internal state for input value
+	let inputValue = $state(value);
+
+	// Sync internal state with prop value
+	$effect(() => {
+		inputValue = value;
+	});
+
+	// Action to set input type
+	const typeAction: Action<HTMLInputElement> = (node) => {
+		const updateType = () => {
+			node.type = type;
+		};
+
+		updateType();
+
+		return {
+			update: updateType
+		};
+	};
+
+	// Compute input classes
+	const inputClasses = $derived(`input grow text-black dark:text-primary-500 ${inputClass}`);
 </script>
 
 <div class="m-1 flex max-w-full items-center justify-between gap-2">
 	{#if label}
 		<label for="input" class="w-32 flex-none {labelClass}">{label}</label>
 	{/if}
-	<input use:typeAction id="input" class="input grow text-black dark:text-primary-500 {inputClass}" bind:value {placeholder} {...$$props} />
+	<input use:typeAction id="input" class={inputClasses} bind:value={inputValue} {placeholder} {name} {required} {disabled} />
 </div>

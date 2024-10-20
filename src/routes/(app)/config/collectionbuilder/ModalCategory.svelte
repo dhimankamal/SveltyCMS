@@ -4,9 +4,7 @@
 -->
 <script lang="ts">
 	// Props
-	/** Exposes parent props to this component. */
-	export let parent: any;
-	export let existingCategory: any = { name: '', icon: '' };
+	
 
 	// Stores
 	import { categories, unAssigned } from '@stores/collectionStore';
@@ -18,12 +16,19 @@
 
 	//ParaglideJS
 	import * as m from '@src/paraglide/messages';
+	interface Props {
+		/** Exposes parent props to this component. */
+		parent: any;
+		existingCategory?: any;
+	}
+
+	let { parent, existingCategory = { name: '', icon: '' } }: Props = $props();
 
 	// Form Data
-	const formData = {
+	const formData = $state({
 		newCategoryName: existingCategory.name,
 		newCategoryIcon: existingCategory.icon
-	};
+	});
 
 	// We've created a custom submit function to pass the response and close the modal.
 	function onFormSubmit(): void {
@@ -100,14 +105,14 @@
 		<footer class="modal-footer flex {existingCategory.name ? 'justify-between' : 'justify-end'} {parent.regionFooter}">
 			{#if existingCategory.name}
 				<!-- Check if existing category is being edited -->
-				<button type="button" on:click={deleteCategory} class="variant-filled-error btn">
-					<iconify-icon icon="icomoon-free:bin" width="24" /><span class="hidden md:inline">{m.button_delete()}</span>
+				<button type="button" onclick={deleteCategory} class="variant-filled-error btn">
+					<iconify-icon icon="icomoon-free:bin" width="24"></iconify-icon><span class="hidden md:inline">{m.button_delete()}</span>
 				</button>
 			{/if}
 
 			<div class="flex gap-2">
-				<button class="variant-outline-secondary btn" on:click={parent.onClose}>{m.button_cancel()}</button>
-				<button class="variant-filled-tertiary btn dark:variant-filled-primary {parent.buttonPositive}" on:click={onFormSubmit}
+				<button class="variant-outline-secondary btn" onclick={parent.onClose}>{m.button_cancel()}</button>
+				<button class="variant-filled-tertiary btn dark:variant-filled-primary {parent.buttonPositive}" onclick={onFormSubmit}
 					>{m.button_save()}
 				</button>
 			</div>

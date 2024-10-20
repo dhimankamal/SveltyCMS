@@ -21,8 +21,6 @@
 	import type { User } from '@src/auth/types';
 	const user: User = $page.data.user;
 
-	export let modeSet: typeof $mode = 'view';
-
 	// ParaglideJS
 	import * as m from '@src/paraglide/messages';
 
@@ -40,9 +38,16 @@
 	// Import VirtualFolders component
 	import VirtualFolders from '@components/VirtualFolders.svelte';
 
+	// Props
+	interface Props {
+		modeSet?: typeof $mode;
+	}
+
+	let { modeSet = 'view' }: Props = $props();
+
 	// Search Collections
-	let search = '';
-	let searchShow = false;
+	let search = $state('');
+	let searchShow = $state(false);
 
 	interface Category {
 		id: number;
@@ -64,7 +69,7 @@
 	}
 
 	// Define filteredCategories variable as an array of Category objects
-	let filteredCategories: Category[] = ($categories as Category[]) || [];
+	let filteredCategories: Category[] = $state(($categories as Category[]) || []);
 
 	// Define filterCategories function
 	function filterCategories(search: string, categories: Category[]) {
@@ -98,7 +103,7 @@
 	}
 
 	// Determine if the current mode is 'media'
-	$: isMediaMode = $mode === 'media';
+	let isMediaMode = $derived($mode === 'media');
 </script>
 
 <!-- displays all collection parents and their Children as accordion -->
@@ -108,7 +113,7 @@
 		{#if $sidebarState.left === 'collapsed'}
 			<button
 				type="button"
-				on:click={() => {
+				onclick={() => {
 					if (get(screenSize) === 'sm') {
 						toggleSidebar('left', 'hidden');
 					} else {
@@ -117,8 +122,9 @@
 					searchShow = true;
 				}}
 				class="input btn mb-2 w-full"
+				aria-label={m.collections_search()}
 			>
-				<iconify-icon icon="ic:outline-search" width="24" />
+				<iconify-icon icon="ic:outline-search" width="24"></iconify-icon>
 			</button>
 		{:else}
 			<div class="input-group input-group-divider mb-2 grid grid-cols-[auto_1fr_auto]">
@@ -126,28 +132,29 @@
 					type="text"
 					placeholder={m.collections_search()}
 					bind:value={search}
-					on:input={(e) => {
+					oninput={(e) => {
 						filterCategories(e.currentTarget.value, $categories);
 					}}
-					on:keydown={(e) => e.key === 'Enter'}
-					on:focus={() => (searchShow = false)}
+					onkeydown={(e) => e.key === 'Enter'}
+					onfocus={() => (searchShow = false)}
 					class="input h-12 w-64 outline-none transition-all duration-500 ease-in-out"
 				/>
 				{#if search}
 					<button
-						on:click={() => {
+						onclick={() => {
 							search = '';
 							filterCategories('', $categories);
 						}}
-						on:keydown={(event) => {
+						onkeydown={(event) => {
 							if (event.key === 'Enter' || event.key === ' ') {
 								search = '';
 								filterCategories('', $categories);
 							}
 						}}
 						class="variant-filled-surface w-12"
+						aria-label="Clear Search"
 					>
-						<iconify-icon icon="ic:outline-search-off" width="24" />
+						<iconify-icon icon="ic:outline-search-off" width="24"></iconify-icon>
 					</button>
 				{/if}
 			</div>
@@ -163,24 +170,24 @@
 					regionPanel={`divide-y dark:divide-black my-0 overflow-y-auto`}
 					class="divide-y rounded-md bg-surface-300 dark:divide-black"
 				>
-					<svelte:fragment slot="lead">
+					{#snippet lead()}
 						<!-- TODO: Tooltip not fully working -->
-						<iconify-icon icon={category.icon} width="24" class="text-error-500 rtl:ml-2" use:popup={popupCollections} />
-					</svelte:fragment>
+						<iconify-icon icon={category.icon} width="24" class="text-error-500 rtl:ml-2" use:popup={popupCollections}></iconify-icon>
+					{/snippet}
 
-					<svelte:fragment slot="summary">
+					{#snippet summary()}
 						{#if $sidebarState.left === 'full'}
 							<!-- TODO: Translation not updating -->
 							<p class="text-white">{category.name}</p>
 						{/if}
 						<div class="card variant-filled-secondary p-4" data-popup="popupHover">
 							<p>{category.name}</p>
-							<div class="variant-filled-secondary arrow" />
+							<div class="variant-filled-secondary arrow"></div>
 						</div>
-					</svelte:fragment>
+					{/snippet}
 
 					<!-- Collection Children -->
-					<svelte:fragment slot="content">
+					{#snippet content()}
 						<!-- filtered by User Role Permission -->
 
 						{#each category.collections.filter((c) => modeSet == 'edit' || c?.permissions?.[user?.role]?.read != false) as _collection, index}
@@ -190,8 +197,9 @@
 									role="button"
 									tabindex={index}
 									class="-mx-4 flex flex-row items-center bg-surface-300 py-1 pl-3 hover:bg-surface-400 hover:text-white dark:text-black hover:dark:text-white"
-									on:keydown
-									on:click={() => {
+									aria-label="Collection"
+									onkeydown={bubble('keydown')}
+									onclick={() => {
 										if ($mode === 'edit') {
 											mode.set('view');
 											handleSidebarToggle();
@@ -207,7 +215,7 @@
 										});
 									}}
 								>
-									<iconify-icon icon={_collection.icon} width="24" class="px-2 py-1 text-error-600" />
+									<iconify-icon icon={_collection.icon} width="24" class="px-2 py-1 text-error-600"></iconify-icon>
 									<p class="mr-auto text-center capitalize">{_collection.name}</p>
 								</div>
 							{:else}
@@ -216,8 +224,9 @@
 									role="button"
 									tabindex={index}
 									class="-mx-4 flex flex-col items-center py-1 hover:bg-surface-400 hover:text-white dark:text-black hover:dark:text-white"
-									on:keydown
-									on:click={() => {
+									aria-label="Collection"
+									onkeydown={bubble('keydown')}
+									onclick={() => {
 										if ($mode === 'edit') {
 											mode.set('view');
 											handleSidebarToggle();
@@ -233,11 +242,11 @@
 									}}
 								>
 									<p class="text-xs capitalize">{_collection.name}</p>
-									<iconify-icon icon={_collection.icon} width="24" class="text-error-600" />
+									<iconify-icon icon={_collection.icon} width="24" class="text-error-600"></iconify-icon>
 								</div>
 							{/if}
 						{/each}
-					</svelte:fragment>
+					{/snippet}
 				</AccordionItem>
 			{/each}
 		</Accordion>
@@ -247,7 +256,7 @@
 			<!-- Sidebar Expanded -->
 			<button
 				class="btn mt-1 flex w-full flex-row items-center justify-start bg-surface-400 py-2 pl-2 text-white dark:bg-surface-500"
-				on:click={() => {
+				onclick={() => {
 					mode.set('media');
 					// Navigate to the media gallery route
 					goto('/mediagallery');
@@ -257,14 +266,15 @@
 					}
 				}}
 			>
-				<iconify-icon icon="bi:images" width="24" class="px-2 py-1 text-primary-600 rtl:ml-2" />
+				<iconify-icon icon="bi:images" width="24" class="px-2 py-1 text-primary-600 rtl:ml-2"></iconify-icon>
 				<p class="mr-auto text-center uppercase">{m.Collections_MediaGallery()}</p>
 			</button>
 		{:else}
 			<!-- Sidebar Collapsed -->
 			<button
 				class="btn mt-2 flex w-full flex-col items-center bg-surface-400 py-1 pl-2 hover:!bg-surface-400 hover:text-white dark:bg-surface-500 dark:text-white"
-				on:click={() => {
+				aria-label="Media Gallery"
+				onclick={() => {
 					mode.set('media');
 					// Navigate to the media gallery route
 					goto('/mediagallery');
@@ -276,7 +286,7 @@
 				}}
 			>
 				<p class="text-xs uppercase text-white">{m.Collections_MediaGallery()}</p>
-				<iconify-icon icon="bi:images" width="24" class="text-primary-500" />
+				<iconify-icon icon="bi:images" width="24" class="text-primary-500"></iconify-icon>
 			</button>
 		{/if}
 	{:else}
@@ -286,7 +296,8 @@
 			<!-- Sidebar Expanded -->
 			<button
 				class="btn mt-1 flex w-full flex-row items-center justify-start bg-surface-400 py-2 pl-2 text-white dark:bg-surface-500"
-				on:click={() => {
+				aria-label="Return to Collections"
+				onclick={() => {
 					// Switch back to collections mode
 					mode.set('view'); // or the appropriate mode for collections
 					// Optionally, close the sidebar if it's on mobile
@@ -295,14 +306,15 @@
 					}
 				}}
 			>
-				<iconify-icon icon="mdi:folder-multiple-outline" width="24" class="px-2 py-1 text-primary-600 rtl:ml-2" />
+				<iconify-icon icon="mdi:folder-multiple-outline" width="24" class="px-2 py-1 text-primary-600 rtl:ml-2"></iconify-icon>
 				<p class="mr-auto text-center uppercase">Collections</p>
 			</button>
 		{:else}
 			<!-- Sidebar Collapsed -->
 			<button
 				class="btn mt-2 flex w-full flex-col items-center bg-surface-400 py-1 pl-2 hover:!bg-surface-400 hover:text-white dark:bg-surface-500 dark:text-white"
-				on:click={() => {
+				aria-label="Return to Collections"
+				onclick={() => {
 					// Switch back to collections mode
 					mode.set('view'); // or the appropriate mode for collections
 					// Optionally, close the sidebar if it's on mobile
@@ -313,7 +325,7 @@
 				}}
 			>
 				<p class="text-xs uppercase text-white">Collections</p>
-				<iconify-icon icon="mdi:folder-multiple-outline" width="24" class="text-primary-500" />
+				<iconify-icon icon="mdi:folder-multiple-outline" width="24" class="text-primary-500"></iconify-icon>
 			</button>
 		{/if}
 

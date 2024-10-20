@@ -15,7 +15,7 @@
 	// Skeleton
 	import { TabGroup, Tab } from '@skeletonlabs/skeleton';
 
-	let tabSet: number = 0;
+	let tabSet: number = $state(0);
 </script>
 
 <!-- PageTitle -->
@@ -23,38 +23,44 @@
 	<PageTitle name={m.uploadMedia_title()} icon="bi:images" iconColor="text-tertiary-500 dark:text-primary-500" />
 
 	<!-- Back -->
-	<button on:click={() => history.back()} class="variant-outline-primary btn-icon">
-		<iconify-icon icon="ri:arrow-left-line" width="20" />
+	<button onclick={() => history.back()} class="variant-outline-primary btn-icon">
+		<iconify-icon icon="ri:arrow-left-line" width="20"></iconify-icon>
 	</button>
 </div>
 
 <div class="wrapper">
 	<TabGroup>
 		<Tab bind:group={tabSet} name="local" value={0}>
-			<svelte:fragment slot="lead">
-				<div class="flex items-center justify-between gap-2">
-					<iconify-icon icon="material-symbols:database" width="28"></iconify-icon>
-					<p class="text-tertiary-500 dark:text-primary-500">Local Upload</p>
-				</div>
-			</svelte:fragment>
+			{#snippet lead()}
+					
+					<div class="flex items-center justify-between gap-2">
+						<iconify-icon icon="material-symbols:database" width="28"></iconify-icon>
+						<p class="text-tertiary-500 dark:text-primary-500">Local Upload</p>
+					</div>
+				
+					{/snippet}
 		</Tab>
 
 		<Tab bind:group={tabSet} name="remote" value={1}>
-			<svelte:fragment slot="lead">
-				<div class="flex items-center justify-between gap-2">
-					<iconify-icon icon="arcticons:tautulli-remote" width="28"></iconify-icon>
-					<p class="text-tertiary-500 dark:text-primary-500">Remote Upload</p>
-				</div>
-			</svelte:fragment>
+			{#snippet lead()}
+					
+					<div class="flex items-center justify-between gap-2">
+						<iconify-icon icon="arcticons:tautulli-remote" width="28"></iconify-icon>
+						<p class="text-tertiary-500 dark:text-primary-500">Remote Upload</p>
+					</div>
+				
+					{/snippet}
 		</Tab>
 
 		<!-- Tab Panels --->
-		<svelte:fragment slot="panel">
-			{#if tabSet === 0}
-				<LocalUpload />
-			{:else if tabSet === 1}
-				<RemoteUpload />
-			{/if}
-		</svelte:fragment>
+		{#snippet panel()}
+			
+				{#if tabSet === 0}
+					<LocalUpload />
+				{:else if tabSet === 1}
+					<RemoteUpload />
+				{/if}
+			
+			{/snippet}
 	</TabGroup>
 </div>

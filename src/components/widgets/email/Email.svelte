@@ -4,6 +4,8 @@
 -->
 
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import type { FieldType } from '.';
 	import { publicEnv } from '@root/config/public';
 	import { updateTranslationProgress, getFieldName } from '@utils/utils';
@@ -15,17 +17,23 @@
 	// zod validation
 	import * as z from 'zod';
 
-	export let field: FieldType;
 
 	const fieldName = getFieldName(field);
-	export let value = $collectionValue[fieldName] || {};
+	interface Props {
+		field: FieldType;
+		value?: any;
+	}
 
-	const _data: Record<string, string> = $mode === 'create' ? {} : value;
+	let { field, value = $collectionValue[fieldName] || {} }: Props = $props();
+
+	const _data: Record<string, string> = $state($mode === 'create' ? {} : value);
 	const _language = publicEnv.DEFAULT_CONTENT_LANGUAGE;
 
-	$: updateTranslationProgress(_data, field);
+	run(() => {
+		updateTranslationProgress(_data, field);
+	});
 
-	let validationError: string | null = null;
+	let validationError: string | null = $state(null);
 	let debounceTimeout: number | undefined;
 	let initialRender = true;
 
@@ -69,7 +77,7 @@
 	type="email"
 	aria-label={field?.label || field?.db_fieldName}
 	bind:value={_data[_language]}
-	on:input={validateInput}
+	oninput={validateInput}
 	name={field.db_fieldName}
 	id={field.db_fieldName}
 	placeholder={field.placeholder || field.db_fieldName}

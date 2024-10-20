@@ -4,6 +4,8 @@
 -->
 
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { theme, updateTheme } from '@stores/themeStore';
 	import type { Theme } from '@src/databases/dbInterface';
 
@@ -13,11 +15,11 @@
 	// Component
 	import PageTitle from '@components/PageTitle.svelte';
 
-	let selectedTheme: Theme | null = null;
-	let livePreviewTheme: Theme | null = null;
+	let selectedTheme: Theme | null = $state(null);
+	let livePreviewTheme: Theme | null = $state(null);
 
 	// This will hold the custom themes
-	let customThemes: Theme[] = [];
+	let customThemes: Theme[] = $state([]);
 
 	// Load custom themes dynamically
 	loadCustomThemes();
@@ -38,7 +40,7 @@
 	}
 
 	// Combine default theme with dynamically loaded custom themes
-	$: themes = [
+	let themes = $derived([
 		{
 			_id: 'default-theme',
 			name: 'SveltyCMSTheme',
@@ -48,11 +50,15 @@
 			updatedAt: Date.now()
 		},
 		...customThemes
-	];
+	]);
 
 	// Reactions to theme changes
-	$: if (selectedTheme) updateTheme(selectedTheme.name);
-	$: if (livePreviewTheme) updateTheme(livePreviewTheme.name);
+	run(() => {
+		if (selectedTheme) updateTheme(selectedTheme.name);
+	});
+	run(() => {
+		if (livePreviewTheme) updateTheme(livePreviewTheme.name);
+	});
 
 	function applyTheme(theme: Theme) {
 		selectedTheme = theme;
@@ -80,7 +86,7 @@
 
 <div class="mb-4">
 	<label for="theme-select" class="mb-2 block font-bold">Current System Theme:</label>
-	<select id="theme-select" bind:value={selectedTheme} class="select" on:change={handleThemeChange}>
+	<select id="theme-select" bind:value={selectedTheme} class="select" onchange={handleThemeChange}>
 		{#each themes as theme (theme._id)}
 			<option value={theme}>{theme.name}</option>
 		{/each}
@@ -91,10 +97,10 @@
 	<h3 class="font-bold">Available Themes:</h3>
 	{#each customThemes as theme (theme._id)}
 		<button
-			on:mouseover={() => previewThemeChange(theme)}
-			on:focus={() => previewThemeChange(theme)}
-			on:mouseout={resetPreview}
-			on:blur={resetPreview}
+			onmouseover={() => previewThemeChange(theme)}
+			onfocus={() => previewThemeChange(theme)}
+			onmouseout={resetPreview}
+			onblur={resetPreview}
 			class="variant-outline-tertiary btn mt-2"
 		>
 			Preview {theme.name}
@@ -115,7 +121,7 @@
 		class="variant-ghost-primary btn w-full gap-2 py-6"
 		aria-label={m.config_Martketplace()}
 	>
-		<iconify-icon icon="icon-park-outline:shopping-bag" width="28" class="text-white" />
+		<iconify-icon icon="icon-park-outline:shopping-bag" width="28" class="text-white"></iconify-icon>
 		<p class="uppercase">{m.config_Martketplace()}</p>
 	</a>
 {/if}

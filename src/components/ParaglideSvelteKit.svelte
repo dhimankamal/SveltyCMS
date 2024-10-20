@@ -4,14 +4,24 @@
 -->
 
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { browser } from '$app/environment';
 
 	// Stores
 	import { systemLanguage } from '@stores/store';
 
 	import { languageTag, onSetLanguageTag, setLanguageTag } from '@src/paraglide/runtime';
+	interface Props {
+		children?: import('svelte').Snippet;
+	}
+
+	let { children }: Props = $props();
 	// initialize the language tag
-	$: _languageTag = languageTag;
+	let _languageTag;
+	run(() => {
+		_languageTag = languageTag;
+	});
 
 	// Check if the environment is not server-side rendering (SSR)
 	if (import.meta.env.SSR === false) {
@@ -27,5 +37,5 @@
 </script>
 
 {#key _languageTag}
-	<slot />
+	{@render children?.()}
 {/key}

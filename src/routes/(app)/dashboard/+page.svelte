@@ -1,13 +1,26 @@
-<!-- 
+<!--
 @file src/routes/(app)/dashboard/+page.svelte
-@description This file sets up and displays the dashboard page. It provides a user-friendly interface for managing system resources and system messages.
+@description Dashboard page using Svelte 5 runes and Skeleton.dev toast for notifications.
+Features:
+- Responsive grid layout for widgets
+- Add/remove widgets dynamically
+- Persistent user preferences
+- Theme-aware components
+- Skeleton.dev toast notifications
 -->
 
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { userPreferences, type WidgetPreference } from '@stores/userPreferences';
-	import { screenSize, type ScreenSize } from '@stores/screenSizeStore';
+
+// Stores
+	import { userPreferences } from '@stores/userPreferences';
+	import { screenSize } from '@stores/screenSizeStore';
 	import { theme } from '@stores/themeStore';
+
+	// Svelte-grid
+	import { fade } from 'svelte/transition';
+	import Grid, { GridItem } from 'svelte-grid-extended';
+	
 
 	// Components
 	import PageTitle from '@components/PageTitle.svelte';
@@ -18,36 +31,57 @@
 	import UserActivityWidget from './widgets/UserActivityWidget.svelte';
 	import SystemMessagesWidget from './widgets/SystemMessagesWidget.svelte';
 
-	// Svelte-grid
-	import { fade } from 'svelte/transition';
-	import Grid, { GridItem } from 'svelte-grid-extended';
+	// Skeleton
+	import { getToastStore, type ToastSettings } from '@skeletonlabs/skeleton';
+	// Initialize the toast store
+	const toastStore = getToastStore();
 
-	export let data: { user: { id: string } };
+	// Props
+	let { data } = $props();
 
-	let items: WidgetPreference[] = [];
-	let dropdownOpen = false;
-	let gridElement: HTMLElement;
+	// State
+	let items = $state([]);
+	let dropdownOpen = $state(false);
+	let gridElement = $state(null);
 
-	$: itemSize = $screenSize === 'sm' ? { width: 150, height: 150 } : $screenSize === 'md' ? { width: 200, height: 200 } : { width: 250, height: 250 };
+	// Derived values
+	let itemSize = $derived(getItemSize($screenSize));
+	let cols = $derived(getCols($screenSize));
+	let currentTheme = $derived($theme);
+	let availableWidgets = $derived(
+		Object.keys(widgetComponents).filter(
+			(componentName) => !items.some((item) => item.component === componentName)
+		)
+	);
+	let canAddMoreWidgets = $derived(
+		gridElement && availableWidgets.length > 0 && items.length < getMaxWidgets()
+	);
 
-	$: cols = $screenSize === 'sm' ? 2 : $screenSize === 'md' ? 3 : 4;
-
-	function resetGrid() {
-		items = [];
-		userPreferences.clearPreferences(data.user.id);
+	// Helper functions
+	function getItemSize(size) {
+		switch (size) {
+			case 'sm': return { width: 150, height: 150 };
+			case 'md': return { width: 200, height: 200 };
+			default: return { width: 250, height: 250 };
+		}
 	}
 
-	function remove(id: string) {
-		console.log('Removing widget with id:', id);
-		items = items.filter((item) => item.id !== id);
-		saveWidgets();
+	function getCols(size) {
+		switch (size) {
+			case 'sm': return 2;
+			case 'md': return 3;
+			default: return 4;
+		}
 	}
 
-	function saveWidgets() {
-		console.log('Saving widgets:', items);
-		userPreferences.setPreference(data.user.id, $screenSize, items);
+	function getMaxWidgets() {
+		if (!gridElement) return 0;
+		const gridWidth = Math.floor(gridElement.clientWidth / itemSize.width);
+		const gridHeight = Math.floor(gridElement.clientHeight / itemSize.height);
+		return gridWidth * gridHeight;
 	}
 
+	// Widget components map
 	const widgetComponents = {
 		CPUWidget: { component: CPUWidget, name: 'CPU Usage' },
 		DiskWidget: { component: DiskWidget, name: 'Disk Usage' },
@@ -57,10 +91,25 @@
 		SystemMessagesWidget: { component: SystemMessagesWidget, name: 'System Messages' }
 	};
 
-	function findEmptySpace(gridWidth: number, gridHeight: number): { x: number; y: number } | null {
-		const grid = Array(gridHeight)
-			.fill(null)
-			.map(() => Array(gridWidth).fill(false));
+	// Grid management functions
+	function resetGrid() {
+		items = [];
+		userPreferences.clearPreferences(data.user.id);
+		showToast('All widgets have been reset.', 'warning');
+	}
+
+	function remove(id) {
+		items = items.filter((item) => item.id !== id);
+		saveWidgets();
+		showToast('Widget removed successfully.');
+	}
+
+	function saveWidgets() {
+		userPreferences.setPreference(data.user.id, $screenSize, items);
+	}
+
+	function findEmptySpace(gridWidth, gridHeight) {
+		const grid = Array(gridHeight).fill(null).map(() => Array(gridWidth).fill(false));
 
 		// Mark occupied spaces
 		items.forEach((item) => {
@@ -85,39 +134,47 @@
 		return null; // No empty space found
 	}
 
-	function addNewItem(componentName: string) {
+	function addNewItem(componentName) {
 		const componentInfo = widgetComponents[componentName];
-		if (componentInfo) {
-			const gridWidth = Math.floor(gridElement.clientWidth / itemSize.width);
-			const gridHeight = Math.floor(gridElement.clientHeight / itemSize.height);
-			const emptySpace = findEmptySpace(gridWidth, gridHeight);
-
-			if (emptySpace) {
-				const newItem: WidgetPreference = {
-					id: crypto.randomUUID(),
-					component: componentName,
-					label: componentInfo.name,
-					x: emptySpace.x,
-					y: emptySpace.y,
-					w: 1,
-					h: 1,
-					min: { w: 1, h: 1 },
-					max: { w: 2, h: 2 },
-					movable: true,
-					resizable: true
-				};
-				items = [...items, newItem];
-				saveWidgets();
-			} else {
-				console.warn('No empty space available for new widget');
-			}
-		} else {
+		if (!componentInfo) {
 			console.error('Component not found:', componentName);
+			showToast('Error: Widget not found.', 'error');
+			return;
+		}
+
+		if (!canAddMoreWidgets) {
+			showToast('Cannot add more widgets. Grid is full.', 'warning');
+			return;
+		}
+
+		const gridWidth = Math.floor(gridElement.clientWidth / itemSize.width);
+		const gridHeight = Math.floor(gridElement.clientHeight / itemSize.height);
+		const emptySpace = findEmptySpace(gridWidth, gridHeight);
+
+		if (emptySpace) {
+			const newItem = {
+				id: crypto.randomUUID(),
+				component: componentName,
+				label: componentInfo.name,
+				x: emptySpace.x,
+				y: emptySpace.y,
+				w: 1,
+				h: 1,
+				min: { w: 1, h: 1 },
+				max: { w: 2, h: 2 },
+				movable: true,
+				resizable: true
+			};
+			items = [...items, newItem];
+			saveWidgets();
+			showToast(`${componentInfo.name} widget added successfully.`, 'success');
+		} else {
+			showToast('No empty space available for new widget.', 'warning');
 		}
 		dropdownOpen = false;
 	}
 
-	function handleLayoutChange(event: CustomEvent) {
+	function handleLayoutChange(event) {
 		if (Array.isArray(event.detail)) {
 			items = event.detail.map((item) => ({
 				...items.find((i) => i.id === item.id),
@@ -131,18 +188,27 @@
 		dropdownOpen = !dropdownOpen;
 	}
 
-	onMount(async () => {
-		await userPreferences.loadPreferences(data.user.id);
-		const loadedItems = $userPreferences[$screenSize];
-		items = Array.isArray(loadedItems) ? loadedItems : [];
+	function showToast(message, type = 'info') {
+		const toast: ToastSettings = {
+			message: message,
+			background: type === 'error' ? 'variant-filled-error' : 
+						type === 'warning' ? 'variant-filled-warning' : 
+						type === 'success' ? 'variant-filled-success' : 
+						'variant-filled-primary'
+		};
+		toastStore.trigger(toast);
+	}
+
+	// Effects
+	$effect(() => {
+		userPreferences.loadPreferences(data.user.id).then(() => {
+			const loadedItems = $userPreferences[$screenSize];
+			items = Array.isArray(loadedItems) ? loadedItems : [];
+		});
 	});
-
-	$: currentTheme = $theme;
-
-	$: availableWidgets = Object.keys(widgetComponents).filter((componentName) => !items.some((item) => item.component === componentName));
-
-	$: canAddMoreWidgets = availableWidgets.length > 0 && items.length < cols * Math.floor(gridElement?.clientHeight / itemSize.height || 0);
 </script>
+
+<!-- The rest of the template remains largely the same -->
 
 <div class="my-2 flex items-center justify-between gap-2">
 	<!-- Page Title -->
@@ -163,23 +229,23 @@
 				<button
 					on:click={toggleDropdown}
 					type="button"
-					class="variant-filled-tertiary btn gap-2 !text-white dark:variant-filled-primary"
+					class="btn variant-filled-primary"
 					aria-haspopup="true"
 					aria-expanded={dropdownOpen}
 				>
-					<iconify-icon icon="carbon:add-filled" width="24" class="text-white" />
-					Add
+					<iconify-icon icon="carbon:add-filled" width="24"></iconify-icon>
+					Add Widget
 				</button>
 				{#if dropdownOpen}
 					<div
-						class="absolute right-0 z-10 mt-2 w-48 divide-y divide-gray-200 rounded border border-gray-300 bg-white shadow-lg dark:divide-gray-600 dark:border-gray-700 dark:bg-gray-800"
+						class="card variant-filled-surface p-4 absolute right-0 z-10 mt-2 w-48"
 						aria-label="Add Widget Menu"
 					>
 						{#each availableWidgets as componentName}
 							<button
 								on:click={() => addNewItem(componentName)}
 								type="button"
-								class="block w-full px-4 py-2 text-left hover:bg-gray-200 dark:hover:bg-gray-700"
+								class="btn variant-soft-primary w-full mb-2"
 							>
 								{widgetComponents[componentName].name}
 							</button>
@@ -188,7 +254,7 @@
 				{/if}
 			</div>
 		{/if}
-		<button class="variant-filled-warning btn" on:click={resetGrid}>Reset All</button>
+		<button class="btn variant-filled-warning" on:click={resetGrid}>Reset All</button>
 	</div>
 </div>
 
@@ -209,9 +275,9 @@
 				>
 					<div transition:fade={{ duration: 300 }} class="relative h-full w-full">
 						<div class="absolute right-1 top-1 z-10">
-							<button on:click={() => remove(item.id)} class="btn-icon" aria-label="Remove Widget">✕</button>
+							<button on:click={() => remove(item.id)} class="btn btn-sm variant-filled-error" aria-label="Remove Widget">✕</button>
 						</div>
-						<div class="h-full w-full rounded-md border border-surface-500 bg-surface-100 p-2 shadow-2xl dark:bg-surface-700">
+						<div class="card variant-filled-surface p-4 h-full w-full">
 							{#if widgetComponents[item.component]}
 								<svelte:component this={widgetComponents[item.component].component} label={item.label} {currentTheme} />
 							{:else}
@@ -223,6 +289,6 @@
 			{/each}
 		</Grid>
 	{:else}
-		<p class="text-tertiary-500 dark:text-primary-500">No widgets added yet. Use the "Add" button to add widgets.</p>
+		<p class="text-center p-4">No widgets added yet. Use the "Add Widget" button to add widgets.</p>
 	{/if}
 </div>

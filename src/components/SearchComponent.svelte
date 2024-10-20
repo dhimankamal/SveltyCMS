@@ -15,9 +15,9 @@
 	import { isSearchVisible, globalSearchIndex, triggerActionStore } from '@utils/globalSearchIndex';
 
 	// Define the searchResults array and searchQuery variable
-	let searchResults: any[] = [];
-	let searchQuery = '';
-	let inputRef: HTMLInputElement;
+	let searchResults: any[] = $state([]);
+	let searchQuery = $state('');
+	let inputRef: HTMLInputElement = $state();
 
 	// Function to perform fuzzy search
 	async function fuzzySearch(query: string) {
@@ -142,9 +142,9 @@
 	<div class="fixed bottom-0 left-0 right-0 top-0 z-50 flex flex-col items-center justify-center bg-gray-900/50 backdrop-blur-sm">
 		<!-- Search input -->
 		<input
-			on:input={() => fuzzySearch(searchQuery)}
+			oninput={() => fuzzySearch(searchQuery)}
 			bind:value={searchQuery}
-			on:keydown={onKeyDown}
+			onkeydown={onKeyDown}
 			bind:this={inputRef}
 			type="text"
 			placeholder="Global Search ..."
@@ -156,7 +156,7 @@
 			{#each searchResults as result (result.title)}
 				<button
 					class="border-b text-white last:border-0 last:pb-2 hover:bg-surface-400"
-					on:click={() => handleResultClick(result, Object.keys(result.triggers)[0])}
+					onclick={() => handleResultClick(result, Object.keys(result.triggers)[0])}
 				>
 					<div class="grid auto-cols-auto grid-flow-col text-left">
 						<!-- Highlighted title -->
@@ -186,7 +186,7 @@
 							{#each Object.entries(result.triggers) as [triggerKey, trigger]}
 								<button
 									class="flex items-center justify-between px-6 py-1 hover:bg-surface-500"
-									on:click={() => handleResultClick(result, triggerKey)}
+									onclick={() => handleResultClick(result, triggerKey)}
 								>
 									<!-- Highlighted trigger -->
 									<HighlightedText text={triggerKey} term={searchQuery} />

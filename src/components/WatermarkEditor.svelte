@@ -2,13 +2,17 @@
 	import WatermarkSelector from './WatermarkSelector.svelte';
 	import WatermarkSettings from './WatermarkSettings.svelte';
 
-	export let mediaItems = [];
-	let selectedMedia = null;
-	let size = '100%';
-	let opacity = 1;
-	let positionX = 0;
-	let positionY = 0;
-	let rotation = 0;
+	interface Props {
+		mediaItems?: any;
+	}
+
+	let { mediaItems = [] }: Props = $props();
+	let selectedMedia = $state(null);
+	let size = $state('100%');
+	let opacity = $state(1);
+	let positionX = $state(0);
+	let positionY = $state(0);
+	let rotation = $state(0);
 
 	function handleMediaSelect(media) {
 		selectedMedia = media;

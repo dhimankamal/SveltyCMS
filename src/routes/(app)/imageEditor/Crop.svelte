@@ -4,16 +4,22 @@
 -->
 
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { createEventDispatcher, onMount } from 'svelte';
 	import Konva from 'konva';
 
-	export let stage: Konva.Stage;
-	export let layer: Konva.Layer;
-	export let imageNode: Konva.Image;
+	interface Props {
+		stage: Konva.Stage;
+		layer: Konva.Layer;
+		imageNode: Konva.Image;
+	}
+
+	let { stage, layer, imageNode }: Props = $props();
 
 	const dispatch = createEventDispatcher();
 
-	let cropShape: 'rectangle' | 'square' | 'circular' = 'rectangle';
+	let cropShape: 'rectangle' | 'square' | 'circular' = $state('rectangle');
 	let cropTool: Konva.Rect | Konva.Circle;
 	let transformer: Konva.Transformer;
 	let cropOverlay: Konva.Rect;
@@ -170,11 +176,11 @@
 		dispatch('cropReset');
 	}
 
-	$: {
+	run(() => {
 		if (cropShape) {
 			initCropTool();
 		}
-	}
+	});
 </script>
 
 <!-- Crop Controls UI -->
@@ -190,10 +196,10 @@
 		</div>
 	</div>
 	<div class="mt-4 flex justify-around gap-4">
-		<button on:click={cancelCrop} class="variant-filled-error btn">Cancel</button>
-		<button on:click={resetCrop} class="variant-outline btn">Reset</button>
-		<button on:click={applyCrop} class="variant-filled-primary btn">
-			<iconify-icon icon="mdi:crop" width="20" />
+		<button onclick={cancelCrop} class="variant-filled-error btn">Cancel</button>
+		<button onclick={resetCrop} class="variant-outline btn">Reset</button>
+		<button onclick={applyCrop} class="variant-filled-primary btn">
+			<iconify-icon icon="mdi:crop" width="20"></iconify-icon>
 			Apply Crop
 		</button>
 	</div>

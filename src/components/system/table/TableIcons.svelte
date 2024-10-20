@@ -4,6 +4,8 @@
 -->
 
 <script lang="ts">
+	import { stopPropagation } from 'svelte/legacy';
+
 	import { createEventDispatcher } from 'svelte';
 
 	// Stores
@@ -11,8 +13,12 @@
 
 	const dispatch = createEventDispatcher();
 
-	export let checked = false;
-	export let iconStatus = 'undefined';
+	interface Props {
+		checked?: boolean;
+		iconStatus?: string;
+	}
+
+	let { checked = $bindable(false), iconStatus = 'undefined' }: Props = $props();
 
 	function handleIconClick() {
 		checked = !checked;
@@ -27,10 +33,10 @@
 	}
 </script>
 
-<td on:click|stopPropagation={handleIconClick} class="!pl-[10px]">
+<td onclick={stopPropagation(handleIconClick)} class="!pl-[10px]">
 	<button
-		on:keydown={handleKeydown}
-		on:click|stopPropagation={handleIconClick}
+		onkeydown={handleKeydown}
+		onclick={stopPropagation(handleIconClick)}
 		aria-checked={checked ? 'true' : 'false'}
 		aria-labelledby={checked ? 'true' : 'false'}
 		role="checkbox"

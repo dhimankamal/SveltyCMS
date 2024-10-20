@@ -4,6 +4,8 @@
 -->
 
 <script lang="ts">
+	import { run, preventDefault } from 'svelte/legacy';
+
 	import { createEventDispatcher } from 'svelte';
 
 	// Stores
@@ -20,7 +22,11 @@
 	// Skeleton
 	import { getModalStore, type ModalComponent, type ModalSettings } from '@skeletonlabs/skeleton';
 
-	export let isCollectionEmpty: boolean;
+	interface Props {
+		isCollectionEmpty: boolean;
+	}
+
+	let { isCollectionEmpty }: Props = $props();
 
 	const modalStore = getModalStore();
 	const dispatch = createEventDispatcher();
@@ -48,10 +54,10 @@
 		modalStore.trigger(modalSettings);
 	}
 
-	let dropdownOpen = false;
-	let actionname: string;
-	let buttonClass: string;
-	let iconValue: string;
+	let dropdownOpen = $state(false);
+	let actionname: string = $state();
+	let buttonClass: string = $state();
+	let iconValue: string = $state();
 
 	function handleButtonClick() {
 		switch ($storeListboxValue) {
@@ -109,37 +115,39 @@
 	};
 
 	// a reactive statement that runs whenever storeListboxValue is updated
-	$: {
+	run(() => {
 		[actionname, buttonClass, iconValue] = buttonMap[$storeListboxValue] || ['', '', '', ''];
 		buttonClass = `btn ${buttonClass} rounded-none w-36 justify-between`;
-	}
+	});
 
-	$: if (isCollectionEmpty && $storeListboxValue !== 'create') {
-		storeListboxValue.set('create');
-	}
+	run(() => {
+		if (isCollectionEmpty && $storeListboxValue !== 'create') {
+			storeListboxValue.set('create');
+		}
+	});
 </script>
 
 <!-- Multibutton group-->
 <div class="relative z-20 mt-1 font-medium text-white">
 	<div class="variant-filled-token btn-group flex overflow-hidden rounded-l-full rounded-r-md rtl:rounded rtl:rounded-r-full">
 		<!-- Left button -->
-		<button type="button" class={`w-[60px] md:w-auto rtl:rotate-180 ${buttonClass} rounded-l-full`} on:click|preventDefault={handleButtonClick}>
+		<button type="button" class={`w-[60px] md:w-auto rtl:rotate-180 ${buttonClass} rounded-l-full`} onclick={preventDefault(handleButtonClick)}>
 			<span class="grid grid-cols-[24px_auto] items-center gap-2 rtl:rotate-180">
-				<iconify-icon icon={iconValue} width="24" class="text-white" />
+				<iconify-icon icon={iconValue} width="24" class="text-white"></iconify-icon>
 				<span class="hidden text-left md:block">{actionname}</span>
 			</span>
 		</button>
 
 		<!-- White line -->
-		<div class="border-l-[3px] border-white" />
+		<div class="border-l-[3px] border-white"></div>
 
 		<!-- Dropdown button -->
 		<button
 			type="button"
 			class="flex w-[42px] items-center justify-center rounded-r-md bg-surface-400 dark:bg-surface-600"
-			on:click|preventDefault={() => (dropdownOpen = !dropdownOpen)}
+			onclick={preventDefault(() => (dropdownOpen = !dropdownOpen))}
 		>
-			<iconify-icon icon="mdi:chevron-down" width="24" class="text-white" />
+			<iconify-icon icon="mdi:chevron-down" width="24" class="text-white"></iconify-icon>
 		</button>
 	</div>
 
@@ -153,7 +161,7 @@
 						<button
 							type="button"
 							class={`btn flex w-full justify-between gap-2 gradient-${buttonMap[type][1]} ${buttonMap[type][1]}-hover ${buttonMap[type][1]}-focus`}
-							on:click|preventDefault={() => handleOptionClick(type)}
+							onclick={preventDefault(() => handleOptionClick(type))}
 						>
 							<iconify-icon icon={buttonMap[type][2]} width="24" class=""></iconify-icon>
 							<p class="w-full">{buttonMap[type][0]}</p>

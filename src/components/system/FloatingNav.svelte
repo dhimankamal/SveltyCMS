@@ -4,6 +4,8 @@
 -->
 
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { createEventDispatcher } from 'svelte';
 	import { tick, onMount, onDestroy } from 'svelte';
 	import { goto } from '$app/navigation';
@@ -50,13 +52,13 @@
 	}
 
 	const buttonRadius: number = 25; // home button size
-	let showRoutes: boolean = false;
+	let showRoutes: boolean = $state(false);
 
 	const center = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-	let firstLine: SVGLineElement;
-	let firstCircle: HTMLDivElement;
-	const circles: HTMLDivElement[] = [];
-	let svg: SVGSVGElement;
+	let firstLine: SVGLineElement = $state();
+	let firstCircle: HTMLDivElement = $state();
+	const circles: HTMLDivElement[] = $state([]);
+	let svg: SVGSVGElement = $state();
 	const user: User = $page.data.user;
 
 	// Endpoint definition with URL and icon only
@@ -113,11 +115,15 @@
 		else return true;
 	});
 
-	export let buttonInfo: ButtonInfo = {
+	interface Props {
+		buttonInfo?: ButtonInfo;
+	}
+
+	let { buttonInfo = $bindable({
 		x: window.innerWidth - buttonRadius * 3, // right corner, adjusted inward by button's diameter
 		y: window.innerHeight - buttonRadius * 3, // bottom corner, adjusted inward
 		radius: buttonRadius
-	};
+	}) }: Props = $props();
 
 	// Update buttonInfo from localStorage on mount
 	onMount(() => {
@@ -176,10 +182,10 @@
 	}
 
 	// Calculate endpoint positions and angles based on their index
-	$: endpointsWithPositions = endpoints.map((endpoint, index) => ({
+	let endpointsWithPositions = $derived(endpoints.map((endpoint, index) => ({
 		...endpoint,
 		...calculateEndpoint(index, endpoints.length, 140) // Adjust radius as needed
-	}));
+	})));
 
 	// Show the routes when the component is visible
 	function drag(node: HTMLDivElement) {
@@ -309,7 +315,9 @@
 	}
 
 	// Animate the dash
-	$: if (!showRoutes) reverse();
+	run(() => {
+		if (!showRoutes) reverse();
+	});
 
 	function isRightToLeft(): boolean {
 		return document.documentElement.dir === 'rtl';
@@ -341,14 +349,14 @@
            width:{buttonInfo.radius * 2}px;
            height:{buttonInfo.radius * 2}px"
 	tabindex="0"
-	on:keydown={handleMainKeyDown}
+	onkeydown={handleMainKeyDown}
 >
-	<iconify-icon icon="tdesign:map-route-planning" width="36" style="color:white" />
+	<iconify-icon icon="tdesign:map-route-planning" width="36" style="color:white"></iconify-icon>
 </div>
 
 <!-- Show the routes when the component is visible -->
 {#if showRoutes}
-	<button on:click={() => (showRoutes = false)} class="fixed left-0 top-0 z-[9999999]">
+	<button onclick={() => (showRoutes = false)} class="fixed left-0 top-0 z-[9999999]">
 		<svg bind:this={svg} xmlns="http://www.w3.org/2000/svg" use:setDash>
 			<line bind:this={firstLine} x1={buttonInfo.x} y1={buttonInfo.y} x2={center.x} y2={center.y} />
 			{#each endpointsWithPositions.slice(1) as endpoint}
@@ -369,13 +377,13 @@
 			role="button"
 			aria-label="Home"
 			tabindex="0"
-			on:click={() => handleEndpointClick(endpointsWithPositions[0])}
-			on:keydown={(event) => handleEndpointKeydown(event, endpointsWithPositions[0])}
+			onclick={() => handleEndpointClick(endpointsWithPositions[0])}
+			onkeydown={(event) => handleEndpointKeydown(event, endpointsWithPositions[0])}
 			class="circle flex items-center justify-center border-2 bg-gray-600"
 			style="top:{center.y}px;left:{center.x}px;visibility:hidden; animation:
 			showEndPoints 0.2s 0.2s forwards"
 		>
-			<iconify-icon width="32" style="color:white" icon="solar:home-bold" />
+			<iconify-icon width="32" style="color:white" icon="solar:home-bold"></iconify-icon>
 		</div>
 
 		{#each endpointsWithPositions.slice(1) as endpoint, index}
@@ -384,15 +392,15 @@
 				role="button"
 				aria-label={endpoint.icon}
 				tabindex="0"
-				on:click={() => handleEndpointClick(endpoint)}
-				on:keydown={(event) => handleEndpointKeydown(event, endpoint)}
+				onclick={() => handleEndpointClick(endpoint)}
+				onkeydown={(event) => handleEndpointKeydown(event, endpoint)}
 				class="circle flex items-center justify-center {endpoint.color || 'bg-tertiary-500'}"
 				style="top:{endpoint.y}px;left:{endpoint.x}px;animation:
 				showEndPoints 0.2s 0.4s forwards"
 				transition:fade={{ delay: 200, duration: 200 }}
 			>
 				<!-- Icon for the button -->
-				<iconify-icon width="32" style="color:white" icon={endpoint.icon} />
+				<iconify-icon width="32" style="color:white" icon={endpoint.icon}></iconify-icon>
 			</div>
 		{/each}
 	</button>

@@ -20,6 +20,9 @@ This FloatingInput component has the following properties:
  -->
 
 <script lang="ts">
+	import { run, createBubbler, preventDefault } from 'svelte/legacy';
+
+	const bubble = createBubbler();
 	import { createEventDispatcher } from 'svelte';
 	const dispatch = createEventDispatcher();
 
@@ -49,28 +52,51 @@ This FloatingInput component has the following properties:
 		autocomplete?: 'on' | 'off';
 	}
 
-	export let disabled: InputProps['disabled'] = false;
-	export let icon: InputProps['icon'] = '';
-	export let iconColor: InputProps['iconColor'] = 'gray-500';
 
-	export let inputClass: InputProps['inputClass'] = '';
-	export let label: InputProps['label'] = '';
-	export let labelClass: InputProps['labelClass'] = '';
-	export let minlength: InputProps['minlength'] = undefined;
-	export let maxlength: InputProps['maxlength'] = undefined;
-	export let name: InputProps['name'] = '';
 	export const onInput: InputProps['onInput'] = (value) => {};
-	export let required: InputProps['required'] = false;
-	export let showPasswordBackgroundColor: InputProps['showPasswordBackgroundColor'] = 'light';
-	export let textColor: InputProps['textColor'] = '!text-error-500';
-	export let type: 'password' | 'text' | 'email' = 'text';
-	export let value: InputProps['value'] = '';
-	export let tabindex: number = 0;
-	export let id: string = getIdValue(label) || 'defaultInputId';
-	export let autocomplete: string = getAutocompleteValue(label);
-	export let showPassword = false;
+	interface Props {
+		disabled?: InputProps['disabled'];
+		icon?: InputProps['icon'];
+		iconColor?: InputProps['iconColor'];
+		inputClass?: InputProps['inputClass'];
+		label?: InputProps['label'];
+		labelClass?: InputProps['labelClass'];
+		minlength?: InputProps['minlength'];
+		maxlength?: InputProps['maxlength'];
+		name?: InputProps['name'];
+		required?: InputProps['required'];
+		showPasswordBackgroundColor?: InputProps['showPasswordBackgroundColor'];
+		textColor?: InputProps['textColor'];
+		type?: 'password' | 'text' | 'email';
+		value?: InputProps['value'];
+		tabindex?: number;
+		id?: string;
+		autocomplete?: string;
+		showPassword?: boolean;
+	}
 
-	let inputElement: HTMLInputElement;
+	let {
+		disabled = false,
+		icon = '',
+		iconColor = 'gray-500',
+		inputClass = '',
+		label = '',
+		labelClass = '',
+		minlength = undefined,
+		maxlength = undefined,
+		name = '',
+		required = false,
+		showPasswordBackgroundColor = 'light',
+		textColor = '!text-error-500',
+		type = 'text',
+		value = $bindable(''),
+		tabindex = 0,
+		id = getIdValue(label) || 'defaultInputId',
+		autocomplete = getAutocompleteValue(label),
+		showPassword = $bindable(false)
+	}: Props = $props();
+
+	let inputElement: HTMLInputElement = $state();
 
 	function getAutocompleteValue(label: string | undefined): string {
 		if (label === undefined) {
@@ -94,16 +120,18 @@ This FloatingInput component has the following properties:
 	function initInput(node: HTMLInputElement) {
 		node.type = type;
 	}
-	$: if (type === 'password') showPassword ? inputElement && (inputElement.type = 'text') : inputElement && (inputElement.type = 'password');
+	run(() => {
+		if (type === 'password') showPassword ? inputElement && (inputElement.type = 'text') : inputElement && (inputElement.type = 'password');
+	});
 </script>
 
 <div class="group relative w-full">
 	<input
 		use:initInput
 		bind:this={inputElement}
-		on:input
-		on:keydown
-		on:click={handleClick}
+		oninput={bubble('input')}
+		onkeydown={bubble('keydown')}
+		onclick={handleClick}
 		bind:value
 		{autocomplete}
 		class="{inputClass} peer relative block w-full appearance-none rounded-none border-0 border-b-2 border-surface-300 bg-transparent pl-6 !text-{textColor} focus:border-tertiary-600 focus:!outline-none focus:ring-0 dark:border-surface-400 dark:focus:border-tertiary-500"
@@ -118,7 +146,7 @@ This FloatingInput component has the following properties:
 	/>
 
 	{#if icon}
-		<iconify-icon aria-hidden="true" {icon} width="18" class="absolute top-3 text-{iconColor}" />
+		<iconify-icon aria-hidden="true" {icon} width="18" class="absolute top-3 text-{iconColor}"></iconify-icon>
 	{/if}
 
 	{#if type === 'password'}
@@ -129,9 +157,9 @@ This FloatingInput component has the following properties:
 			icon={showPassword ? 'bi:eye-fill' : 'bi:eye-slash-fill'}
 			class={`absolute right-0 ${showPasswordBackgroundColor === 'light' ? 'text-surface-700' : 'text-surface-300'}`}
 			width="24"
-			on:keydown
-			on:click|preventDefault={togglePasswordVisibility}
-		/>
+			onkeydown={bubble('keydown')}
+			onclick={preventDefault(togglePasswordVisibility)}
+		></iconify-icon>
 	{/if}
 
 	{#if label}

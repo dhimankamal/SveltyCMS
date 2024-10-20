@@ -1,5 +1,10 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
+	interface Props {
+		[key: string]: any
+	}
+
+	let { ...props }: Props = $props();
 	const dispatch = createEventDispatcher();
 
 	function handleClick() {
@@ -138,12 +143,12 @@
 	</defs>
 </svg>
 <svg
-	on:click={handleClick}
-	on:keydown={handleKeyDown}
+	onclick={handleClick}
+	onkeydown={handleKeyDown}
 	role="button"
 	tabindex="0"
 	aria-label="Close icon"
-	class={$$props.class}
+	class={props.class}
 	xmlns="http://www.w3.org/2000/svg"
 	width="20"
 	height="20"

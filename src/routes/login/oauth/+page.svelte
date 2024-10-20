@@ -13,8 +13,12 @@
 	//ParaglideJS
 	import * as m from '@src/paraglide/messages';
 
-	export let data: PageData;
-	let isLoading = true;
+	interface Props {
+		data: PageData;
+	}
+
+	let { data }: Props = $props();
+	let isLoading = $state(true);
 
 	if (data) {
 		isLoading = false; // Process or display data
@@ -40,7 +44,7 @@
 
 				<!-- Submit Button -->
 				<button type="submit" class="variant-filled btn items-center">
-					<iconify-icon icon="flat-color-icons:google" color="white" width="20" class="mr-1" />
+					<iconify-icon icon="flat-color-icons:google" color="white" width="20" class="mr-1"></iconify-icon>
 					<p>{m.oauth_signup()}</p>
 				</button>
 			</div>

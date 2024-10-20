@@ -12,9 +12,13 @@
 
 	const flipDurationMs = 300;
 
-	export let columns: any;
 	// will be called any time a card or a column gets dropped to update the parent data
-	export let onFinalUpdate: any;
+	interface Props {
+		columns: any;
+		onFinalUpdate: any;
+	}
+
+	let { columns = $bindable(), onFinalUpdate }: Props = $props();
 
 	function handleDndConsiderColumns(e: any) {
 		columns = e.detail.items;
@@ -35,8 +39,8 @@
 <section
 	class="ml-1 mr-4 mt-2 flex flex-wrap gap-1 md:mr-1"
 	use:dndzone={{ items: columns, flipDurationMs, type: 'column' }}
-	on:consider={handleDndConsiderColumns}
-	on:finalize={handleDndFinalizeColumns}
+	onconsider={handleDndConsiderColumns}
+	onfinalize={handleDndFinalizeColumns}
 >
 	{#each columns as { id, name, icon, items }, idx (id)}
 		<div

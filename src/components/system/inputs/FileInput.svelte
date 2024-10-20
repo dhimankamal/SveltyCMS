@@ -1,3 +1,4 @@
+<!-- @migration-task Error while migrating Svelte code: $$props is used together with named props in a way that cannot be automatically migrated. -->
 <!-- 
 @file src/components/system/inputs/FileInput.svelte
 @description Component for file input

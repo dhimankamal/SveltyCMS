@@ -4,6 +4,8 @@
 -->
 
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import type { FieldType } from '.';
 	import { publicEnv } from '@root/config/public';
 	import { updateTranslationProgress, getFieldName } from '@utils/utils';
@@ -12,21 +14,15 @@
 	import { contentLanguage, validationStore } from '@stores/store';
 	import { mode, collectionValue } from '@stores/collectionStore';
 
-	export let field: FieldType;
 
 	const fieldName = getFieldName(field);
-	export let value = $collectionValue[fieldName] || {};
 
-	const _data = $mode === 'create' ? {} : value;
+	const _data = $state($mode === 'create' ? {} : value);
 
-	$: _language = field?.translated ? $contentLanguage.toLowerCase() : publicEnv.DEFAULT_CONTENT_LANGUAGE.toLowerCase();
-	$: updateTranslationProgress(_data, field);
 
-	let validationError: string | null = null;
+	let validationError: string | null = $state(null);
 	let debounceTimeout: number | undefined;
 
-	// Reactive statement to update count
-	$: count = _data[_language]?.length ?? 0;
 
 	const getBadgeClass = (length: number) => {
 		if (field?.minlength && length < field?.minlength) {
@@ -46,6 +42,12 @@
 
 	// zod validation
 	import * as z from 'zod';
+	interface Props {
+		field: FieldType;
+		value?: any;
+	}
+
+	let { field, value = $collectionValue[fieldName] || {} }: Props = $props();
 
 	// Define the validation schema for the text field
 	const widgetSchema = z.object({
@@ -89,6 +91,12 @@
 
 	// Export WidgetData for data binding with Fields.svelte
 	export const WidgetData = async () => _data;
+	let _language = $derived(field?.translated ? $contentLanguage.toLowerCase() : publicEnv.DEFAULT_CONTENT_LANGUAGE.toLowerCase());
+	run(() => {
+		updateTranslationProgress(_data, field);
+	});
+	// Reactive statement to update count
+	let count = $derived(_data[_language]?.length ?? 0);
 </script>
 
 <div class="variant-filled-surface btn-group flex w-full rounded">
@@ -99,7 +107,7 @@
 	<input
 		type="text"
 		bind:value={_data[_language]}
-		on:blur={validateInput}
+		onblur={validateInput}
 		name={field?.db_fieldName}
 		id={field?.db_fieldName}
 		placeholder={field?.placeholder && field?.placeholder !== '' ? field?.placeholder : field?.db_fieldName}

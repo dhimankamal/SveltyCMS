@@ -44,9 +44,13 @@ It provides the following functionality:
 
 	const flipDurationMs = 100;
 
-	export let roleData;
-	export let setRoleData;
-	export let updateModifiedCount;
+	interface Props {
+		roleData: any;
+		setRoleData: any;
+		updateModifiedCount: any;
+	}
+
+	let { roleData, setRoleData, updateModifiedCount }: Props = $props();
 
 	const roles = writable<Role[]>([]);
 	const availablePermissions = writable<Permission[]>([]);
@@ -63,7 +67,7 @@ It provides the following functionality:
 	let currentRoleId: string | null = null;
 	let currentGroupName: string = '';
 
-	let items: any;
+	let items: any = $state();
 
 	// Fetch roles and permissions on mount
 	onMount(async () => {
@@ -237,9 +241,9 @@ It provides the following functionality:
 	<div class="wrapper my-4">
 		<div class="mb-4 flex items-center justify-between">
 			<!-- Create -->
-			<button on:click={() => openModal(null, '')} class="variant-filled-primary btn">Create Role</button>
+			<button onclick={() => openModal(null, '')} class="variant-filled-primary btn">Create Role</button>
 			<!-- Delete -->
-			<button on:click={deleteSelectedRoles} class="variant-filled-error btn" disabled={$selectedRoles.size === 0}>
+			<button onclick={deleteSelectedRoles} class="variant-filled-error btn" disabled={$selectedRoles.size === 0}>
 				Delete Roles ({$selectedRoles.size})
 			</button>
 		</div>
@@ -252,17 +256,17 @@ It provides the following functionality:
 					<section
 						class="list-none space-y-2"
 						use:dndzone={{ items: items, flipDurationMs, type: 'column' }}
-						on:consider={handleSort}
-						on:finalize={handleFinalize}
+						onconsider={handleSort}
+						onfinalize={handleFinalize}
 					>
 						{#each items as role (role.id)}
 							<div class=" animate-flip flex items-center justify-between rounded border p-4 hover:bg-surface-500 md:flex-row">
 								<div class="flex items-center gap-2">
 									<!-- Drag Icon -->
-									<iconify-icon icon="mdi:drag" width="18" class="cursor-move text-gray-500 dark:text-gray-300" />
+									<iconify-icon icon="mdi:drag" width="18" class="cursor-move text-gray-500 dark:text-gray-300"></iconify-icon>
 
 									{#if !role.isAdmin}
-										<input type="checkbox" checked={$selectedRoles.has(role._id)} on:change={() => toggleRoleSelection(role._id)} class="mr-2" />
+										<input type="checkbox" checked={$selectedRoles.has(role._id)} onchange={() => toggleRoleSelection(role._id)} class="mr-2" />
 									{/if}
 
 									<!-- Role Name with Tooltip -->
@@ -274,7 +278,7 @@ It provides the following functionality:
 											width="18"
 											class="ml-1 text-tertiary-500 dark:text-primary-500"
 											use:popup={getTooltipSettings(role.description)}
-										/>
+										></iconify-icon>
 									</span>
 								</div>
 
@@ -284,8 +288,8 @@ It provides the following functionality:
 								</p>
 
 								<!-- Edit Button: changes layout depending on screen size -->
-								<button on:click={() => openModal(role)} class="variant-filled-secondary btn">
-									<iconify-icon icon="mdi:pencil" class="text-white" width="18" />
+								<button onclick={() => openModal(role)} class="variant-filled-secondary btn">
+									<iconify-icon icon="mdi:pencil" class="text-white" width="18"></iconify-icon>
 									<span class="hidden md:block">Edit</span>
 								</button>
 							</div>

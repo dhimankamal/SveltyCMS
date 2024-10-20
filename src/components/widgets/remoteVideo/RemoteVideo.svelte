@@ -1,34 +1,36 @@
 <!-- 
 @file src/components/widgets/remoteVideo/RemoteVideo.svelte
-@description - RemoteVideo widget
+@description RemoteVideo widget for fetching and displaying video information
 -->
 
 <script lang="ts">
-	import type { FieldType } from '.';
 	import { getFieldName } from '@utils/utils';
-
 	// Stores
 	import { validationStore } from '@stores/store';
 	import { mode, collectionValue } from '@stores/collectionStore';
-
-	export let field: FieldType;
-
-	const fieldName = getFieldName(field);
-	export let value = $collectionValue[fieldName] || '';
-
-	const _data = $mode === 'create' ? {} : value;
-	let validationError: string | null = null;
-	let debounceTimeout: number | undefined;
-
-	export const WidgetData = async () => _data;
-
-	export let myData: any = null;
-	$: myData;
-
 	// zod validation
 	import * as z from 'zod';
 
-	// Define the validation schema for the remote video URL input
+	// Define FieldType if it's not imported from elsewhere
+	type FieldType = {
+		db_fieldName: string;
+		placeholder?: string;
+		required?: boolean;
+		// Add other properties as needed
+	};
+
+	// Props
+	let { field } = $props<{ field: FieldType }>();
+
+	// State
+	let fieldName = $state(getFieldName(field));
+	let value = $state($collectionValue[fieldName] || '');
+	let _data = $state($mode === 'create' ? {} : value);
+	let validationError = $state<string | null>(null);
+	let debounceTimeout = $state<number | undefined>(undefined);
+	let myData = $state<any>(null);
+
+	// Widget schema
 	const widgetSchema = z.object({
 		value: z.string().url('Invalid URL format').min(1, 'Video URL is required').optional(),
 		db_fieldName: z.string(),
@@ -76,18 +78,21 @@
 			const data = await response.json();
 			myData = data;
 
-			console.log('Video data fetched successfully', { myData }); // Log the success
+			console.log('Video data fetched successfully', { myData });
 		} catch (error) {
-			console.log('Error fetching video data', error as Error); // Log the error
+			console.log('Error fetching video data', error as Error);
 		}
 	}
+
+	// Exported functions
+	export const WidgetData = async () => _data;
 </script>
 
 <input
 	type="url"
 	bind:value
-	on:change={handleSubmit}
-	on:input={validateInput}
+	onchange={handleSubmit}
+	oninput={validateInput}
 	name={field?.db_fieldName}
 	id={field?.db_fieldName}
 	placeholder={field?.placeholder || field?.db_fieldName}
@@ -109,21 +114,23 @@
 		<div class="px-6 py-4 md:w-1/2">
 			<div class="mb-2 text-xl font-bold text-primary-500">{myData?.videoTitle}</div>
 			<table class="text-base">
-				<tr>
-					<td class="pr-4">User:</td>
-					<td class="text-tertiary-500">{myData?.user_name}</td>
-				</tr>
-				<tr>
-					<td class="pr-4">Dimension:</td>
-					<td class="text-tertiary-500">{myData?.height}px x {myData?.width}px (height x width)</td>
-				</tr>
-				<tr>
-					<td class="pr-4">Duration:</td>
-					<td class="text-tertiary-500">{myData?.duration} min</td>
-				</tr>
+				<tbody>
+					<tr>
+						<td class="pr-4">User:</td>
+						<td class="text-tertiary-500">{myData?.user_name}</td>
+					</tr>
+					<tr>
+						<td class="pr-4">Dimension:</td>
+						<td class="text-tertiary-500">{myData?.height}px x {myData?.width}px (height x width)</td>
+					</tr>
+					<tr>
+						<td class="pr-4">Duration:</td>
+						<td class="text-tertiary-500">{myData?.duration} min</td>
+					</tr>
+				</tbody>
 			</table>
 			<a href={myData?.videoUrl} target="_blank" rel="noreferrer" class="variant-filled-tertiary btn btn-sm mt-4">
-				<span><iconify-icon icon="material-symbols:play-circle-outline" width="18" /></span>
+				<span><iconify-icon icon="material-symbols:play-circle-outline" width="18"></iconify-icon></span>
 				<span>Watch Video</span>
 			</a>
 		</div>

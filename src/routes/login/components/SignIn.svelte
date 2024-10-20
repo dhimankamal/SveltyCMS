@@ -1,3 +1,8 @@
+<!--
+@file src/routes/login/components/SignIn.svelte
+@description - Sign in component
+-->
+
 <script lang="ts">
 	import { privateEnv } from '@root/config/private';
 	import { browser } from '$app/environment';
@@ -8,11 +13,6 @@
 	import type { PageData } from '../$types';
 	import { createEventDispatcher } from 'svelte';
 	const dispatch = createEventDispatcher();
-
-	// Function to handle the "Back" button click
-	function handleBack() {
-		dispatch('back');
-	}
 
 	// Superforms
 	// import SuperDebug from 'sveltekit-superforms/client/SuperDebug.svelte';
@@ -26,6 +26,7 @@
 	import FloatingInput from '@components/system/inputs/floatingInput.svelte';
 	import SveltyCMSLogo from '@components/system/icons/SveltyCMS_Logo.svelte';
 	import SveltyCMSLogoFull from '@components/system/icons/SveltyCMS_LogoFull.svelte';
+	import PasswordStrength from '@components/PasswordStrength.svelte';
 
 	// Skeleton
 	import { Toast, getToastStore } from '@skeletonlabs/skeleton';
@@ -34,49 +35,63 @@
 	// ParaglideJS
 	import * as m from '@src/paraglide/messages';
 
-	let showPassword = false;
+	// Props
+	let {
+		registration_token = '',
+		hide_email = '',
+		active = undefined as undefined | 0 | 1,
+		// Superforms
+		FormSchemaLogin = undefined as PageData['loginForm'] | undefined,
+		FormSchemaForgot = undefined as PageData['forgotForm'] | undefined,
+		FormSchemaReset = undefined as PageData['resetForm'] | undefined
+	} = $props();
 
-	export let registration_token = '';
-	export let hide_email = '';
+	// State
+	let tabIndex = $state(1);
+	let showPassword = $state(false);
+	let PWforgot = $state(false);
+	let PWreset = $state(false);
+	let formElement = $state<HTMLFormElement | null>(null);
 
-	export let active: undefined | 0 | 1 = undefined;
-	export const show = false;
-	export let PWforgot: boolean = false;
-	export let PWreset: boolean = false;
+	// Derived state
+	let pageData = $derived($page.data as PageData);
+	let firstUserExists = $derived(pageData.firstUserExists);
 
-	const pageData = $page.data as PageData;
-	const firstUserExists = pageData.firstUserExists;
+	// Effects
+	$effect(() => {
+		if (browser) {
+			const current_url = window.location.href;
+			if (current_url.includes('/login') && current_url.search('token') > -1) {
+				// Set flags and extract token/email for password reset flow
 
-	// Redirect from email to restore password page
-	const current_url = browser ? window.location.href : '';
+				PWforgot = true;
+				PWreset = true;
+				const start = current_url.indexOf('=') + 1;
+				const end = current_url.indexOf('&');
+				registration_token = current_url.slice(start, end);
 
-	if (current_url.includes('/login') && current_url.search('token') > -1) {
-		// Set flags and extract token/email for password reset flow
+				const emailStart = current_url.indexOf('email=') + 6;
+				hide_email = current_url.slice(emailStart, current_url.length);
+			}
+		}
+	});
 
-		PWforgot = true;
-		PWreset = true;
-		const start = current_url.indexOf('=') + 1;
-		const end = current_url.indexOf('&');
-		registration_token = current_url.slice(start, end);
-
-		const emailStart = current_url.indexOf('email=') + 6;
-		hide_email = current_url.slice(emailStart, current_url.length);
+	// Function to handle the "Back" button click
+	function handleBack(event: Event) {
+		event.stopPropagation();
+		dispatch('back');
 	}
 
 	// Login Form
-	export let FormSchemaLogin: PageData['loginForm'];
 	const { form, constraints, allErrors, errors, enhance, delayed } = superForm<any>(FormSchemaLogin, {
 		id: 'login',
 		validators: zod(loginFormSchema),
-		// Clear form on success.
-		resetForm: true,
-		// Prevent page invalidation, which would clear the other form when the load function executes again.
-		invalidateAll: false,
+		resetForm: true, // Clear form on success.
+		invalidateAll: false, // Prevent page invalidation, which would clear the other form when the load function executes again.
 		// other options
 		applyAction: true,
 		taintedMessage: '',
 		multipleSubmits: 'prevent',
-
 		onSubmit: ({ cancel }) => {
 			// Submit email as lowercase only
 			$form.email = $form.email.toLowerCase();
@@ -84,11 +99,10 @@
 			// handle login form submission
 			if ($allErrors.length > 0) {
 				cancel();
-				formElement.classList.add('wiggle');
-				setTimeout(() => formElement.classList.remove('wiggle'), 300);
+				formElement?.classList.add('wiggle');
+				setTimeout(() => formElement?.classList.remove('wiggle'), 300);
 			}
 		},
-
 		onResult: ({ result, cancel }) => {
 			// handle SignIn form result
 			if (result.type == 'redirect') {
@@ -105,15 +119,13 @@
 				return;
 			}
 			cancel();
-
 			// add wiggle animation to form element
-			formElement.classList.add('wiggle');
-			setTimeout(() => formElement.classList.remove('wiggle'), 300);
+			formElement?.classList.add('wiggle');
+			setTimeout(() => formElement?.classList.remove('wiggle'), 300);
 		}
 	});
 
 	// Forgot Form
-	export let FormSchemaForgot: PageData['forgotForm'];
 	const {
 		form: forgotForm,
 		allErrors: forgotAllErrors,
@@ -123,15 +135,13 @@
 	} = superForm<any>(FormSchemaForgot, {
 		id: 'forgot',
 		validators: zod(forgotFormSchema),
-		// Clear form on success.
-		resetForm: true,
-		// Prevent page invalidation, which would clear the other form when the load function executes again.
-		invalidateAll: false,
+		resetForm: true, // Clear form on success
+		invalidateAll: false, // Prevent page invalidation, which would clear the other form when the load function executes again.
+
 		// other options
 		applyAction: true,
 		taintedMessage: '',
 		multipleSubmits: 'prevent',
-
 		onSubmit: ({ cancel }) => {
 			// Submit email as lowercase only
 			$forgotForm.email = $forgotForm.email.toLowerCase();
@@ -139,12 +149,10 @@
 			// handle login form submission
 			if ($allErrors.length > 0) {
 				cancel();
-
-				formElement.classList.add('wiggle');
-				setTimeout(() => formElement.classList.remove('wiggle'), 300);
+				formElement?.classList.add('wiggle');
+				setTimeout(() => formElement?.classList.remove('wiggle'), 300);
 			}
 		},
-
 		onResult: ({ result, cancel }) => {
 			// handle forgot form result
 			if (result.type === 'error') {
@@ -166,12 +174,11 @@
 				toastStore.trigger(t);
 				return;
 			}
-
 			if (result.type === 'success') {
 				if (result.data !== undefined && result.data.status === false) {
 					PWreset = false;
-					formElement.classList.add('wiggle');
-					setTimeout(() => formElement.classList.remove('wiggle'), 300);
+					formElement?.classList.add('wiggle');
+					setTimeout(() => formElement?.classList.remove('wiggle'), 300);
 					return;
 				} else if (result.data !== undefined) {
 					// Update variables to display reset form page
@@ -201,17 +208,14 @@
 					return;
 				}
 			}
-
 			cancel();
-
 			// add wiggle animation to form element
-			formElement.classList.add('wiggle');
-			setTimeout(() => formElement.classList.remove('wiggle'), 300);
+			formElement?.classList.add('wiggle');
+			setTimeout(() => formElement?.classList.remove('wiggle'), 300);
 		}
 	});
 
 	// Reset Form
-	export let FormSchemaReset: PageData['resetForm'];
 	const {
 		form: resetForm,
 		allErrors: resetAllErrors,
@@ -221,87 +225,65 @@
 	} = superForm<any>(FormSchemaReset, {
 		id: 'reset',
 		validators: zod(resetFormSchema),
-		// Clear form on success.
-		resetForm: true,
-		// Prevent page invalidation, which would clear the other form when the load function executes again.
-		invalidateAll: false,
+		resetForm: true, // Clear form on success.
+		invalidateAll: false, // Prevent page invalidation, which would clear the other form when the load function executes again.
 		// other options
 		applyAction: true,
 		taintedMessage: '',
 		multipleSubmits: 'prevent',
-
 		onSubmit: ({ cancel }) => {
 			// handle login form submission
 			if ($allErrors.length > 0) cancel();
 		},
-
 		onResult: ({ result, cancel }) => {
 			// update variables to display login page
 			PWreset = false;
 			PWforgot = false;
-
 			if (result.type === 'error') {
 				// Extract and format error messages
 				let errorMessages = '';
 				allErrors.subscribe((errors) => {
 					errorMessages = errors.map((error) => error.messages.join(', ')).join('; ');
 				});
-			} else if (result.type === 'success') {
+			} else if (result.type === 'success' || result.type === 'redirect') {
 				// Trigger the Reset toast
 				const t = {
 					message: m.signin_restpasswordtoast(),
 					// Provide any utility or variant background style:
 					background: 'variant-filled-primary',
-					timeout: 4000,
+					timeout: result.type === 'redirect' ? 3000 : 4000,
 					// Add your custom classes here:
 					classes: 'border-1 !rounded-md'
 				};
 				toastStore.trigger(t);
-			} else if (result.type === 'redirect') {
-				// Trigger the toast
-				const t = {
-					message: m.signin_restpasswordtoast(),
-					// Provide any utility or variant background style:
-					background: 'variant-filled-primary',
-					timeout: 3000,
-					// Add your custom classes here:
-					classes: 'border-1 !rounded-md'
-				};
-				toastStore.trigger(t);
-				return;
+				if (result.type === 'redirect') return;
 			}
-
 			cancel();
 
 			// add wiggle animation to form element (only if result type is not "success" or "redirect")
-			formElement.classList.add('wiggle');
-			setTimeout(() => formElement.classList.remove('wiggle'), 300);
+			formElement?.classList.add('wiggle');
+			setTimeout(() => formElement?.classList.remove('wiggle'), 300);
 		}
 	});
 
-	let formElement: HTMLFormElement; // reactive statement when systemLanguage changes
-
-	$: $forgotForm = { ...$forgotForm };
-
-	$resetForm = {
-		...$resetForm,
-		email: hide_email,
-		token: registration_token
-	};
-
-	// Function to handle the "Back" button click
-	function goBack() {
-		active = undefined; // Change to the state you want to represent the login view
-	}
+	$effect(() => {
+		$forgotForm = { ...$forgotForm };
+		$resetForm = {
+			...$resetForm,
+			email: hide_email,
+			token: registration_token
+		};
+	});
 </script>
 
 <Toast />
 
-<!-- svelte-ignore a11y-no-static-element-interactions -->
 <section
-	on:click
-	on:pointerenter
-	on:keydown
+	onclick={() => console.log('Clicked')}
+	onpointerenter={() => console.log('Pointer entered')}
+	onkeydown={(e) => console.log('Key pressed:', e.key)}
+	role="button"
+	tabindex="0"
 	class="hover relative flex items-center"
 	class:active={active == 0}
 	class:inactive={active !== undefined && active !== 0}
@@ -331,7 +313,7 @@
 			<div class="-mt-2 flex items-center justify-end gap-2 text-right text-xs text-error-500">
 				{m.form_required()}
 
-				<button on:click|stopPropagation={handleBack} class="variant-outline-secondary btn-icon">
+				<button onclick={handleBack} class="variant-outline-secondary btn-icon" aria-label="Back">
 					<iconify-icon icon="ri:arrow-right-line" width="20" class="text-black"></iconify-icon>
 				</button>
 			</div>
@@ -346,6 +328,7 @@
 							id="emailsignIn"
 							name="email"
 							type="email"
+							tabindex={tabIndex++}
 							bind:value={$form.email}
 							label={m.form_emailaddress()}
 							{...$constraints.email}
@@ -360,6 +343,7 @@
 							id="passwordsignIn"
 							name="password"
 							type="password"
+							tabindex={tabIndex++}
 							bind:value={$form.password}
 							{...$constraints.password}
 							bind:showPassword
@@ -384,7 +368,7 @@
 								{#if privateEnv.USE_GOOGLE_OAUTH == true}
 									<form method="post" action="?/OAuth" class="flex w-full sm:w-auto">
 										<button type="submit" class="variant-filled-surface btn w-full sm:w-auto">
-											<iconify-icon icon="flat-color-icons:google" color="white" width="20" class="mt-1" />
+											<iconify-icon icon="flat-color-icons:google" color="white" width="20" class="mt-1"></iconify-icon>
 											<p>OAuth</p>
 										</button>
 									</form>
@@ -396,7 +380,8 @@
 								<button
 									type="button"
 									class="variant-ringed-surface btn w-full text-black sm:w-auto"
-									on:click={() => {
+									aria-label={m.signin_forgottenpassword()}
+									onclick={() => {
 										PWforgot = true;
 										PWreset = false;
 									}}
@@ -419,6 +404,7 @@
 							id="emailforgotPW"
 							name="email"
 							type="email"
+							tabindex={tabIndex++}
 							bind:value={$forgotForm.email}
 							required
 							label={m.form_emailaddress()}
@@ -441,7 +427,7 @@
 						<!-- <input type="hidden" name="lang" bind:value={$forgotForm.lang} hidden /> -->
 
 						<div class="mt-4 flex items-center justify-between">
-							<button type="submit" class="variant-filled-surface btn">
+							<button type="submit" class="variant-filled-surface btn" aria-label={m.form_resetpassword()}>
 								{m.form_resetpassword()}
 							</button>
 
@@ -454,12 +440,13 @@
 							<button
 								type="button"
 								class="variant-filled-surface btn-icon"
-								on:click={() => {
+								aria-label="Back"
+								onclick={() => {
 									PWforgot = false;
 									PWreset = false;
 								}}
 							>
-								<iconify-icon icon="mdi:arrow-left-circle" width="38" />
+								<iconify-icon icon="mdi:arrow-left-circle" width="38"></iconify-icon>
 							</button>
 						</div>
 					</form>
@@ -470,11 +457,11 @@
 					<!-- <SuperDebug data={$resetForm} /> -->
 					<form method="post" action="?/resetPW" use:resetEnhance bind:this={formElement} class="flex w-full flex-col gap-3">
 						<!-- Password field -->
-
 						<FloatingInput
 							id="passwordresetPW"
 							name="password"
 							type="password"
+							tabindex={tabIndex++}
 							bind:value={$resetForm.password}
 							bind:showPassword
 							label={m.form_password()}
@@ -489,11 +476,14 @@
 							</span>
 						{/if}
 
+						<PasswordStrength password={$resetForm.password} />
+
 						<!-- Password  Confirm field -->
 						<FloatingInput
 							id="confirm_passwordresetPW"
 							name="confirm_password"
 							type="password"
+							tabindex={tabIndex++}
 							bind:value={$resetForm.confirm_password}
 							bind:showPassword
 							label={m.form_confirmpassword()}
@@ -508,11 +498,14 @@
 							</span>
 						{/if}
 
+						<PasswordStrength password={$resetForm.confirm_password} />
+
 						<!-- Registration Token -->
 						<FloatingInput
 							id="tokenresetPW"
 							name="token"
 							type="password"
+							tabindex={tabIndex++}
 							bind:value={$resetForm.token}
 							bind:showPassword
 							label={m.signin_registrationtoken()}
@@ -549,12 +542,13 @@
 							<button
 								type="button"
 								class="variant-filled-surface btn-icon"
-								on:click={() => {
+								aria-label="Back"
+								onclick={() => {
 									PWforgot = false;
 									PWreset = false;
 								}}
 							>
-								<iconify-icon icon="mdi:arrow-left-circle" width="38" />
+								<iconify-icon icon="mdi:arrow-left-circle" width="38"></iconify-icon>
 							</button>
 						</div>
 					</form>

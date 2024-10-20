@@ -5,6 +5,8 @@ It dynamically fetches and displays data based on the current language and colle
 It also handles navigation, mode switching (view, edit, create, media), and SEO metadata for the page.
 -->
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { goto } from '$app/navigation';
 	import { onMount, onDestroy } from 'svelte';
 	import { browser } from '$app/environment';
@@ -23,20 +25,22 @@ It also handles navigation, mode switching (view, edit, create, media), and SEO 
 	import { logger } from '@utils/logger';
 
 
-	let forwardBackward = false; // Track if using browser history
-	let initialLoadComplete = false; // Track initial load
+	let forwardBackward = $state(false); // Track if using browser history
+	let initialLoadComplete = $state(false); // Track initial load
 
 	// Reactive re-computation for setting collection based on route parameters
-	$: if ($collections && $page.params.collection) {
-		const selectedCollection = $collections[$page.params.collection];
-		if (selectedCollection) {
-			collection.set(selectedCollection as Schema);
-			initialLoadComplete = true;
-		} else if (initialLoadComplete) {
-			console.error('Collection not found:', $page.params.collection);
-			goto('/404'); // Redirect to a 404 page or handle error appropriately
+	run(() => {
+		if ($collections && $page.params.collection) {
+			const selectedCollection = $collections[$page.params.collection];
+			if (selectedCollection) {
+				collection.set(selectedCollection as Schema);
+				initialLoadComplete = true;
+			} else if (initialLoadComplete) {
+				console.error('Collection not found:', $page.params.collection);
+				goto('/404'); // Redirect to a 404 page or handle error appropriately
+			}
 		}
-	}
+	});
 
 	// Handle browser history navigation
 	onMount(() => {
@@ -71,19 +75,25 @@ It also handles navigation, mode switching (view, edit, create, media), and SEO 
 	});
 
 	// Handle language changes reactively
-	$: if (!forwardBackward && $collection?.name) {
-		goto(`/${$contentLanguage}/${$collection.name}`);
-	} else if (!forwardBackward && initialLoadComplete && !$collection?.name) {
-		console.error('Collection or collection name is undefined after language change.');
-		goto('/404'); // Handle error or redirect
-	}
+	run(() => {
+		if (!forwardBackward && $collection?.name) {
+			goto(`/${$contentLanguage}/${$collection.name}`);
+		} else if (!forwardBackward && initialLoadComplete && !$collection?.name) {
+			console.error('Collection or collection name is undefined after language change.');
+			goto('/404'); // Handle error or redirect
+		}
+	});
 
 	// Reactive SEO metadata
-	$: if (browser) {
-		document.title = `${$collection?.name || 'Loading...'} - Your Site Title`;
-		document.querySelector('meta[name="description"]')?.setAttribute('content', `View and manage entries for ${$collection?.name || '...'}.`);
-	}
-	$: logger.debug(`Page view $collectionValue: ${JSON.stringify($collectionValue)}`);
+	run(() => {
+		if (browser) {
+			document.title = `${$collection?.name || 'Loading...'} - Your Site Title`;
+			document.querySelector('meta[name="description"]')?.setAttribute('content', `View and manage entries for ${$collection?.name || '...'}.`);
+		}
+	});
+	run(() => {
+		logger.debug(`Page view $collectionValue: ${JSON.stringify($collectionValue)}`);
+	});
 </script>
 
 <div class="content h-full">

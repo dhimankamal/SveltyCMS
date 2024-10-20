@@ -7,14 +7,18 @@
 	import Konva from 'konva';
 	import { onMount, createEventDispatcher } from 'svelte';
 
-	export let stage: Konva.Stage;
-	export let layer: Konva.Layer;
-	export let imageNode: Konva.Image;
+	interface Props {
+		stage: Konva.Stage;
+		layer: Konva.Layer;
+		imageNode: Konva.Image;
+	}
+
+	let { stage, layer, imageNode }: Props = $props();
 
 	let focalPoint: Konva.Group | null = null;
 	let focalPointActive = false;
-	let relativeX: number = 0;
-	let relativeY: number = 0;
+	let relativeX: number = $state(0);
+	let relativeY: number = $state(0);
 	const dispatch = createEventDispatcher();
 
 	onMount(() => {
@@ -149,7 +153,7 @@
 		</div>
 	</div>
 	<div class="mt-4 flex justify-around gap-4">
-		<button on:click={removeFocalPoint} class="variant-filled-error btn"> Remove Focal Point </button>
-		<button on:click={resetFocalPoint} class="variant-filled-primary btn"> Reset Focal Point </button>
+		<button onclick={removeFocalPoint} class="variant-filled-error btn"> Remove Focal Point </button>
+		<button onclick={resetFocalPoint} class="variant-filled-primary btn"> Reset Focal Point </button>
 	</div>
 </div>

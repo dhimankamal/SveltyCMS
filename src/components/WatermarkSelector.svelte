@@ -9,9 +9,13 @@
 		name: string;
 	};
 
-	export let mediaItems: MediaItem[] = [];
-	export let selectedMedia: MediaItem | null = null;
-	export let onSelect: (media: MediaItem) => void;
+	interface Props {
+		mediaItems?: MediaItem[];
+		selectedMedia?: MediaItem | null;
+		onSelect: (media: MediaItem) => void;
+	}
+
+	let { mediaItems = [], selectedMedia = null, onSelect }: Props = $props();
 
 	function handleSelect(media: MediaItem) {
 		onSelect(media);
@@ -23,8 +27,8 @@
 		<button
 			type="button"
 			class="cursor-pointer"
-			on:click={() => handleSelect(media)}
-			on:keydown={(e) => (e.key === 'Enter' ? handleSelect(media) : null)}
+			onclick={() => handleSelect(media)}
+			onkeydown={(e) => (e.key === 'Enter' ? handleSelect(media) : null)}
 			aria-pressed={media === selectedMedia}
 			role="button"
 			tabindex="0"

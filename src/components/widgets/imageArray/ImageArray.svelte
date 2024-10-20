@@ -22,17 +22,21 @@
 	// zod validation
 	import * as z from 'zod';
 
-	export let field: FieldType;
+	interface Props {
+		field: FieldType;
+	}
 
-	let files: any = [];
-	const _fieldsValue: any = [];
-	let name: any;
+	let { field }: Props = $props();
+
+	let files: any = $state([]);
+	const _fieldsValue: any = $state([]);
+	let name: any = $state();
 	const optimizedFileName: string | undefined = undefined;
 	const optimizedMimeType: string | undefined = undefined;
 	let hashValue: string | undefined;
 	let selectedFiles: string[] = [];
-	let collapsedAll = false;
-	let validationError: string | null = null;
+	let collapsedAll = $state(false);
+	let validationError: string | null = $state(null);
 
 	if (field.db_fieldName) {
 		name = getFieldName(field);
@@ -160,11 +164,11 @@
 			<p>Images</p>
 		</div>
 		<div class="flex justify-end gap-2">
-			<button class="variant-outline-primary btn-icon" on:click={toggleCollapseAll}>
-				<iconify-icon icon="mdi:collapse-all-outline" width="20" />
+			<button class="variant-outline-primary btn-icon" onclick={toggleCollapseAll}>
+				<iconify-icon icon="mdi:collapse-all-outline" width="20"></iconify-icon>
 			</button>
-			<button class="variant-outline-primary btn-icon" on:click={addMoreImages}>
-				<iconify-icon icon="material-symbols:add" width="20" />
+			<button class="variant-outline-primary btn-icon" onclick={addMoreImages}>
+				<iconify-icon icon="material-symbols:add" width="20"></iconify-icon>
 			</button>
 		</div>
 	</div>
@@ -182,15 +186,15 @@
 					</div>
 
 					<div class="flex items-center gap-2">
-						<button class="variant-outline btn-icon" on:click={() => toggleCollapse(index)}>
-							<iconify-icon icon="bxs:up-arrow" width="18" class:rotate-180={file.collapsed || collapsedAll} />
+						<button class="variant-outline btn-icon" onclick={() => toggleCollapse(index)}>
+							<iconify-icon icon="bxs:up-arrow" width="18" class:rotate-180={file.collapsed || collapsedAll}></iconify-icon>
 						</button>
 
-						<button class="variant-outline btn-icon" on:click={() => deleteImage(index)}>
-							<iconify-icon icon="mdi:delete" width="18" class="text-error-500" />
+						<button class="variant-outline btn-icon" onclick={() => deleteImage(index)}>
+							<iconify-icon icon="mdi:delete" width="18" class="text-error-500"></iconify-icon>
 						</button>
 
-						<iconify-icon icon="mdi:drag" width="18" class="ml-2 cursor-move" />
+						<iconify-icon icon="mdi:drag" width="18" class="ml-2 cursor-move"></iconify-icon>
 					</div>
 				</div>
 
@@ -227,11 +231,15 @@
 	</ol>
 {:else}
 	<FileDropzone {name} bind:files accept="image/*" type="file" multiple on:change={onDropzoneChangeHandler}>
-		<svelte:fragment slot="lead"><iconify-icon icon="fa6-solid:file-arrow-up" width="45"></iconify-icon></svelte:fragment>
-		<svelte:fragment slot="message"
-			><span class="font-bold">Upload <span class="text-primary-500">Multiple </span>files</span> or drag & drop</svelte:fragment
-		>
-		<svelte:fragment slot="meta">PNG, JPG, GIF, WEBP, AVIF, and SVG allowed.</svelte:fragment>
+		{#snippet lead()}
+						<iconify-icon icon="fa6-solid:file-arrow-up" width="45"></iconify-icon>
+					{/snippet}
+		{#snippet message()}
+						<span class="font-bold">Upload <span class="text-primary-500">Multiple </span>files</span> or drag & drop
+					{/snippet}
+		{#snippet meta()}
+						PNG, JPG, GIF, WEBP, AVIF, and SVG allowed.
+					{/snippet}
 	</FileDropzone>
 {/if}
 

@@ -4,6 +4,8 @@
 -->
 
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import type { FieldType } from '.';
 	import { publicEnv } from '@root/config/public';
 	import { updateTranslationProgress, getFieldName } from '@utils/utils';
@@ -15,17 +17,23 @@
 	// zod validation
 	import * as z from 'zod';
 
-	export let field: FieldType;
 
 	const fieldName = getFieldName(field);
-	export let value = $collectionValue[fieldName] || {};
+	interface Props {
+		field: FieldType;
+		value?: any;
+	}
 
-	const _data = $mode === 'create' ? {} : value;
+	let { field, value = $collectionValue[fieldName] || {} }: Props = $props();
 
-	$: _language = field?.translated ? $contentLanguage : publicEnv.DEFAULT_CONTENT_LANGUAGE;
-	$: updateTranslationProgress(_data, field);
+	const _data = $state($mode === 'create' ? {} : value);
 
-	let validationError: string | null = null;
+	let _language = $derived(field?.translated ? $contentLanguage : publicEnv.DEFAULT_CONTENT_LANGUAGE);
+	run(() => {
+		updateTranslationProgress(_data, field);
+	});
+
+	let validationError: string | null = $state(null);
 	let debounceTimeout: number | undefined;
 
 	export const WidgetData = async () => _data;
@@ -74,7 +82,7 @@
 		type="checkbox"
 		color={field.color}
 		bind:checked={_data[_language].checked}
-		on:input={validateInput}
+		oninput={validateInput}
 		class="h-[${field.size}] w-[${field.size}] mr-4 rounded"
 		aria-label={field?.label || field?.db_fieldName}
 		aria-invalid={!!validationError}
@@ -86,7 +94,7 @@
 		type="text"
 		placeholder="Define Label"
 		bind:value={_data[_language].label}
-		on:input={validateInput}
+		oninput={validateInput}
 		class="input text-black dark:text-primary-500"
 		aria-label="Checkbox Label"
 		aria-invalid={!!validationError}

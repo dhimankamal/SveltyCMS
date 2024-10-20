@@ -4,6 +4,8 @@
 -->
 
 <script lang="ts">
+	import { run, preventDefault } from 'svelte/legacy';
+
 	import type { FieldType } from '.';
 	import { publicEnv } from '@root/config/public';
 	import { getFieldName } from '@utils/utils';
@@ -15,17 +17,21 @@
 	// zod validation
 	import * as z from 'zod';
 
-	export let field: FieldType;
 
 	const fieldName = getFieldName(field);
-	export let value = $collectionValue[fieldName] || {};
+	interface Props {
+		field: FieldType;
+		value?: any;
+	}
 
-	const _data = $mode === 'create' ? {} : value;
+	let { field, value = $collectionValue[fieldName] || {} }: Props = $props();
+
+	const _data = $state($mode === 'create' ? {} : value);
 	const _language = publicEnv.DEFAULT_CONTENT_LANGUAGE;
-	let validationError: string | null = null;
+	let validationError: string | null = $state(null);
 	let debounceTimeout: number | undefined;
 
-	let numberInput: HTMLInputElement;
+	let numberInput: HTMLInputElement = $state();
 	const language = $contentLanguage;
 
 	export const WidgetData = async () => _data;
@@ -49,16 +55,18 @@
 		return numberWithDecimalSeparator.substring(1, 2);
 	}
 
-	$: if (numberInput) {
-		const value = numberInput.value;
-		const decimalSeparator = getDecimalSeparator(language);
-		const number = parseFloat(value.replace(new RegExp(`[^0-9${decimalSeparator}]`, 'g'), '').replace(decimalSeparator, '.'));
-		if (!isNaN(number)) {
-			numberInput.value = new Intl.NumberFormat(language, { maximumFractionDigits: 20 }).format(number);
-		} else {
-			numberInput.value = value;
+	run(() => {
+		if (numberInput) {
+			const value = numberInput.value;
+			const decimalSeparator = getDecimalSeparator(language);
+			const number = parseFloat(value.replace(new RegExp(`[^0-9${decimalSeparator}]`, 'g'), '').replace(decimalSeparator, '.'));
+			if (!isNaN(number)) {
+				numberInput.value = new Intl.NumberFormat(language, { maximumFractionDigits: 20 }).format(number);
+			} else {
+				numberInput.value = value;
+			}
 		}
-	}
+	});
 
 	// Define the validation schema for this widget
 	const widgetSchema = z.object({
@@ -96,7 +104,7 @@
 	}
 
 	// Reactive statement to update count
-	$: count = _data[_language]?.length ?? 0;
+	let count = $derived(_data[_language]?.length ?? 0);
 	const getBadgeClass = (length: number) => {
 		if (field?.minlength && length < field?.minlength) {
 			return 'bg-red-600';
@@ -123,7 +131,7 @@
 		type="text"
 		bind:value={_data[_language]}
 		bind:this={numberInput}
-		on:input|preventDefault={handleInput}
+		oninput={preventDefault(handleInput)}
 		name={field?.db_fieldName}
 		id={field?.db_fieldName}
 		placeholder={field?.placeholder && field?.placeholder !== '' ? field?.placeholder : field?.db_fieldName}
@@ -134,7 +142,7 @@
 		class="input text-black dark:text-primary-500"
 		aria-invalid={!!validationError}
 		aria-describedby={validationError ? `${field.db_fieldName}-error` : undefined}
-		on:blur={validateInput}
+		onblur={validateInput}
 	/>
 
 	<!-- suffix -->

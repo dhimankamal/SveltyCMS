@@ -3,6 +3,8 @@
 @description  This component sets up and displays the collection page. It provides a user-friendly interface for creating, editing, and deleting collections.
 -->
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import axios from 'axios';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
@@ -36,10 +38,10 @@
 	const name = $mode == 'edit' ? ($collectionValue ? $collectionValue.name : collectionName) : collectionName;
 
 	// Page title
-	let pageTitle: string;
-	let highlightedPart: string;
+	let pageTitle: string = $state();
+	let highlightedPart: string = $state();
 
-	$: {
+	run(() => {
 		// Set the base page title according to the mode
 		if ($mode === 'edit') {
 			pageTitle = `Edit ${collectionName} Collection`;
@@ -56,7 +58,7 @@
 		if (pageTitle.includes(highlightedPart)) {
 			pageTitle = pageTitle.replace(new RegExp(`\\b${highlightedPart}\\b`, 'g'), highlightedPart);
 		}
-	}
+	});
 
 	function handlePageTitleUpdate(e: CustomEvent<string>) {
 		highlightedPart = e.detail;
@@ -167,8 +169,8 @@
 	<PageTitle name={pageTitle} highlight={highlightedPart} icon="ic:baseline-build" />
 
 	<!-- Back -->
-	<button on:click={() => history.back()} class="variant-outline-primary btn-icon">
-		<iconify-icon icon="ri:arrow-left-line" width="20" />
+	<button onclick={() => history.back()} class="variant-outline-primary btn-icon">
+		<iconify-icon icon="ri:arrow-left-line" width="20"></iconify-icon>
 	</button>
 </div>
 
@@ -176,13 +178,13 @@
 	<div class="flex justify-center gap-3">
 		<button
 			type="button"
-			on:click={handleCollectionDelete}
+			onclick={handleCollectionDelete}
 			class=" variant-filled-error btn mb-3 mr-1 mt-1 justify-end dark:variant-filled-error dark:text-black"
 			>{m.button_delete()}
 		</button>
 		<button
 			type="button"
-			on:click={handleCollectionSave}
+			onclick={handleCollectionSave}
 			class="variant-filled-tertiary btn mb-3 mr-1 mt-1 justify-end dark:variant-filled-tertiary dark:text-black">{m.button_save()}</button
 		>
 	</div>
@@ -197,7 +199,7 @@
 			<!-- Edit -->
 			<Tab bind:group={$tabSet} name="default" value={0}>
 				<div class="flex items-center gap-1">
-					<iconify-icon icon="ic:baseline-edit" width="24" class="text-tertiary-500 dark:text-primary-500" />
+					<iconify-icon icon="ic:baseline-edit" width="24" class="text-tertiary-500 dark:text-primary-500"></iconify-icon>
 					<span class:active={$tabSet === 0} class:text-tertiary-500={$tabSet === 0} class:text-primary-500={$tabSet === 0}>{m.button_edit()}</span>
 				</div>
 			</Tab>
@@ -205,7 +207,7 @@
 			<!-- Widget Fields -->
 			<Tab bind:group={$tabSet} name="widget" value={1}>
 				<div class="flex items-center gap-1">
-					<iconify-icon icon="mdi:widgets-outline" width="24" class="text-tertiary-500 dark:text-primary-500" />
+					<iconify-icon icon="mdi:widgets-outline" width="24" class="text-tertiary-500 dark:text-primary-500"></iconify-icon>
 					<span class:active={$tabSet === 1} class:text-tertiary-500={$tabSet === 2} class:text-primary-500={$tabSet === 2}
 						>{m.collection_widgetfields()}</span
 					>
@@ -213,12 +215,14 @@
 			</Tab>
 		{/if}
 
-		<svelte:fragment slot="panel">
-			{#if $tabSet === 0}
-				<CollectionForm on:updatePageTitle={handlePageTitleUpdate} />
-			{:else if $tabSet === 1}
-				<CollectionWidget on:save={handleCollectionSave} />
-			{/if}
-		</svelte:fragment>
+		{#snippet panel()}
+			
+				{#if $tabSet === 0}
+					<CollectionForm on:updatePageTitle={handlePageTitleUpdate} />
+				{:else if $tabSet === 1}
+					<CollectionWidget on:save={handleCollectionSave} />
+				{/if}
+			
+			{/snippet}
 	</TabGroup>
 </div>

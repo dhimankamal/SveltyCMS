@@ -18,19 +18,22 @@
 	import type { MediaImage } from '@utils/media/mediaModels';
 	import FileInput from '@components/system/inputs/FileInput.svelte';
 
-	let isFlipped = false; // State variable to track flip button
+	let isFlipped = $state(false); // State variable to track flip button
 
-	export let field: FieldType;
-	export let value: File | MediaImage = $collectionValue[getFieldName(field)]; // pass file directly from imageArray
 
-	let _data: File | MediaImage | undefined = value;
-	let validationError: string | null = null;
+	let _data: File | MediaImage | undefined = $state(value);
+	let validationError: string | null = $state(null);
 	let debounceTimeout: number | undefined;
 
-	$: updated = _data !== value;
 
 	// Define the validation schema for this widget
 	import * as z from 'zod';
+	interface Props {
+		field: FieldType;
+		value?: File | MediaImage;
+	}
+
+	let { field = $bindable(), value = $collectionValue[getFieldName(field)] }: Props = $props();
 
 	const widgetSchema = z.union([
 		z
@@ -92,6 +95,7 @@
 		// If not updated value is not changed and is MediaImage type so send back only id
 		return updated || $mode === 'create' ? _data : { _id: (value as MediaImage)?._id };
 	};
+	let updated = $derived(_data !== value);
 </script>
 
 {#if !_data}
@@ -139,17 +143,17 @@
 				<!-- Buttons -->
 				<div class="col-span-1 flex flex-col items-end justify-between gap-2 p-2">
 					<!-- Flip -->
-					<button on:click={() => (isFlipped = !isFlipped)} class="variant-ghost btn-icon">
+					<button onclick={() => (isFlipped = !isFlipped)} class="variant-ghost btn-icon">
 						<iconify-icon
 							icon="uiw:reload"
 							width="24"
 							class={isFlipped ? ' rotate-90 text-yellow-500 transition-transform duration-300' : 'text-white  transition-transform duration-300'}
-						/>
+						></iconify-icon>
 					</button>
 
 					<!-- Delete -->
-					<button on:click={() => (_data = undefined)} class="variant-ghost btn-icon">
-						<iconify-icon icon="material-symbols:delete-outline" width="30" class="text-error-500" />
+					<button onclick={() => (_data = undefined)} class="variant-ghost btn-icon">
+						<iconify-icon icon="material-symbols:delete-outline" width="30" class="text-error-500"></iconify-icon>
 					</button>
 				</div>
 			</div>

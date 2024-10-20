@@ -1,7 +1,8 @@
 <!-- 
- @files src/routes/(app)/mediagallery/Filter.svelte
+@file src/routes/(app)/mediagallery/Filter.svelte
 @description This component displays a filter for the media gallery.
 -->
+
 <script lang="ts">
 	export let globalSearchValue: string;
 	export let selectedMediaType: string;
@@ -9,6 +10,15 @@
 
 	function clearSearch() {
 		globalSearchValue = '';
+	}
+
+	function renderMediaTypeOption(type: { value: string; icon: string }) {
+		return `
+			<div class="flex items-center gap-2">
+				${type.icon ? `<iconify-icon icon="${type.icon}" width="24" class="text-primary-500"></iconify-icon>` : ''}
+				<span class="uppercase">${type.value}</span>
+			</div>
+		`;
 	}
 </script>
 
@@ -29,10 +39,7 @@
 			<select id="mediaType" bind:value={selectedMediaType} class="input">
 				{#each mediaTypes as type}
 					<option value={type.value}>
-						<p class="flex items-center gap-2">
-							<iconify-icon icon={type.icon} width="24" class="text-primary-500" />
-							<span class="uppercase">{type.value}</span>
-						</p>
+						{@html renderMediaTypeOption(type)}
 					</option>
 				{/each}
 			</select>

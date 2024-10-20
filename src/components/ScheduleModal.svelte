@@ -22,12 +22,17 @@
 	const modalStore = getModalStore();
 
 	// Props
-	/** Exposes parent props to this component. */
-	export let parent: any;
+	
+	interface Props {
+		/** Exposes parent props to this component. */
+		parent: any;
+	}
 
-	let scheduleDate: string = '';
+	let { parent }: Props = $props();
+
+	let scheduleDate: string = $state('');
 	let action: 'publish' | 'unpublish' | 'delete' | 'schedule' | 'clone' | 'test' =
-		($modalStore[0]?.meta?.initialAction as 'publish' | 'unpublish' | 'delete' | 'schedule' | 'clone' | 'test') || 'schedule';
+		$state(($modalStore[0]?.meta?.initialAction as 'publish' | 'unpublish' | 'delete' | 'schedule' | 'clone' | 'test') || 'schedule');
 
 	const actionOptions = [
 		{ value: 'publish' as const, label: m.entrylist_multibutton_publish() },
@@ -101,10 +106,10 @@
 		</form>
 
 		<footer class="modal-footer {parent.regionFooter}">
-			<button class="btn {parent?.buttonNeutral}" on:click={parent?.onClose}>
+			<button class="btn {parent?.buttonNeutral}" onclick={parent?.onClose}>
 				{m.button_cancel()}
 			</button>
-			<button class="btn {parent?.buttonPositive}" on:click={onFormSubmit}>{m.button_save()}</button>
+			<button class="btn {parent?.buttonPositive}" onclick={onFormSubmit}>{m.button_save()}</button>
 		</footer>
 	</div>
 {/if}

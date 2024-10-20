@@ -21,10 +21,14 @@
 	import type { User } from '@src/auth/types';
 	const username: User = $page.data.user.username;
 
-	export let tokenLink = dev ? publicEnv.HOST_DEV : publicEnv.HOST_PROD;
-
 	// svelty-email
 	import { Container, Head, Hr, Html, Img, Link, Preview, Section, Text } from 'svelty-email';
+
+	interface Props {
+		tokenLink?: any;
+	}
+
+	let { tokenLink = dev ? publicEnv.HOST_DEV : publicEnv.HOST_PROD }: Props = $props();
 
 	const fontFamily = '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif';
 

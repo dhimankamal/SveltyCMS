@@ -4,6 +4,8 @@
 -->
 
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
 	import { publicEnv } from '@root/config/public';
@@ -26,16 +28,20 @@
 	import RobotsMetaInput from './RobotsMetaInput.svelte';
 	import SeoPreview from './SeoPreview.svelte';
 
-	export let field;
 	const fieldName = getFieldName(field);
-	export let value = $collectionValue[fieldName] || {};
+	interface Props {
+		field: any;
+		value?: any;
+	}
+
+	let { field, value = $collectionValue[fieldName] || {} }: Props = $props();
 
 	interface Suggestion {
 		text: string;
 		impact: number;
 	}
 
-	const _data = $mode === 'create' ? {} : value;
+	const _data = $state($mode === 'create' ? {} : value);
 
 	let _language = field?.translated ? $contentLanguage : publicEnv.DEFAULT_CONTENT_LANGUAGE;
 
@@ -45,37 +51,41 @@
 	}
 
 	// Initialize title, description, and robotsMeta from _data
-	let title = _data[_language].title || '';
-	let description = _data[_language].description || '';
-	let robotsMeta = _data[_language].robotsMeta || 'index, follow';
+	let title = $state(_data[_language].title || '');
+	let description = $state(_data[_language].description || '');
+	let robotsMeta = $state(_data[_language].robotsMeta || 'index, follow');
 
-	let titleCharacterWidth = 0;
-	let descriptionCharacterWidth = 0;
-	let SeoPreviewToggle: boolean = false;
+	let titleCharacterWidth = $state(0);
+	let descriptionCharacterWidth = $state(0);
+	let SeoPreviewToggle: boolean = $state(false);
 	let score = 0;
-	let progress = 0;
-	let suggestions: Suggestion[] = [];
-	let hostUrl = '';
-	let showHeatmap: boolean = false;
+	let progress = $state(0);
+	let suggestions: Suggestion[] = $state([]);
+	let hostUrl = $state('');
+	let showHeatmap: boolean = $state(false);
 	let seoContent = '';
-	let seoKeywords: string[] = [];
+	let seoKeywords: string[] = $state([]);
 	let validationError: string | null = null;
 
 	// Reactive statement to update progress
-	$: progress = Math.round((score / (8 * 3)) * 100);
+	run(() => {
+		progress = Math.round((score / (8 * 3)) * 100);
+	});
 
 	// Update _data whenever title, description, or robotsMeta change
-	$: {
+	run(() => {
 		_data[_language] = {
 			..._data[_language],
 			title,
 			description,
 			robotsMeta
 		};
-	}
+	});
 
 	// Update translation progress
-	$: updateTranslationProgress(_data, field);
+	run(() => {
+		updateTranslationProgress(_data, field);
+	});
 
 	onMount(() => {
 		hostUrl = window.location.origin;
@@ -145,7 +155,7 @@
 	<RobotsMetaInput bind:value={robotsMeta} />
 </div>
 
-<button class="toggle-heatmap" on:click={toggleHeatmap}>
+<button class="toggle-heatmap" onclick={toggleHeatmap}>
 	{showHeatmap ? 'Hide' : 'Show'} Heatmap
 </button>
 
@@ -154,7 +164,7 @@
 		<h3>SEO Content Heatmap</h3>
 		<div class="input-group">
 			<label for="seo-keywords">Enter keywords (comma-separated):</label>
-			<input id="seo-keywords" type="text" on:input={handleKeywordsInput} placeholder="keyword1, keyword2, ..." />
+			<input id="seo-keywords" type="text" oninput={handleKeywordsInput} placeholder="keyword1, keyword2, ..." />
 		</div>
 		<!-- Corrected prop name to 'keywords' -->
 		<Heatmap content={seoContent} language={$contentLanguage} keywords={seoKeywords} on:heatmapGenerated={handleHeatmapGenerated} />
@@ -173,15 +183,15 @@
 		<div class="flex flex-col items-center justify-start text-xs sm:text-sm">
 			<div class="gap sm:flex sm:gap-4">
 				<div class="flex justify-center gap-2">
-					<iconify-icon icon="mdi:close-octagon" class="text-error-500" width="20" />
+					<iconify-icon icon="mdi:close-octagon" class="text-error-500" width="20"></iconify-icon>
 					<span class="flex-auto">0 - 49</span>
 				</div>
 				<div class="flex justify-center gap-2">
-					<span><iconify-icon icon="bi:hand-thumbs-up-fill" width="20" class="text-tertiary-500" /></span>
+					<span><iconify-icon icon="bi:hand-thumbs-up-fill" width="20" class="text-tertiary-500"></iconify-icon></span>
 					<span class="flex-auto">50 - 79</span>
 				</div>
 				<div class="flex justify-center gap-2">
-					<span><iconify-icon icon="material-symbols:check-circle-outline" class="text-success-500" width="20" /></span>
+					<span><iconify-icon icon="material-symbols:check-circle-outline" class="text-success-500" width="20"></iconify-icon></span>
 					<span class="flex-auto">80 - 100</span>
 				</div>
 			</div>
@@ -202,15 +212,15 @@
 			<div class="mb-2 flex items-center justify-between lg:justify-start lg:gap-5">
 				<h3 class="">{m.widget_seo_suggestionlist()}</h3>
 				<div class="flex items-center gap-2">
-					<iconify-icon icon="mdi:close-octagon" class="text-error-500" width="24" />
+					<iconify-icon icon="mdi:close-octagon" class="text-error-500" width="24"></iconify-icon>
 					<span class="flex-auto">0 - 49</span>
 				</div>
 				<div class="flex items-center gap-2">
-					<span><iconify-icon icon="bi:hand-thumbs-up-fill" width="24" class="text-tertiary-500" /></span>
+					<span><iconify-icon icon="bi:hand-thumbs-up-fill" width="24" class="text-tertiary-500"></iconify-icon></span>
 					<span class="flex-auto">50 - 79</span>
 				</div>
 				<div class="flex items-center gap-2">
-					<span><iconify-icon icon="material-symbols:check-circle-outline" class="text-success-500" width="24" /></span>
+					<span><iconify-icon icon="material-symbols:check-circle-outline" class="text-success-500" width="24"></iconify-icon></span>
 					<span class="flex-auto">80 - 100</span>
 				</div>
 			</div>
@@ -225,11 +235,11 @@
 		<li class="flex items-start p-1">
 			<div class="mr-4 flex-none">
 				{#if suggestion.impact === 3}
-					<iconify-icon icon="material-symbols:check-circle-outline" class="text-success-500" width="24" />
+					<iconify-icon icon="material-symbols:check-circle-outline" class="text-success-500" width="24"></iconify-icon>
 				{:else if suggestion.impact === 2}
-					<iconify-icon icon="bi:hand-thumbs-up-fill" width="24" class="text-tertiary-500" />
+					<iconify-icon icon="bi:hand-thumbs-up-fill" width="24" class="text-tertiary-500"></iconify-icon>
 				{:else}
-					<iconify-icon icon="mdi:close-octagon" class="text-error-500" width="24" />
+					<iconify-icon icon="mdi:close-octagon" class="text-error-500" width="24"></iconify-icon>
 				{/if}
 			</div>
 			<span class="flex-auto text-sm">{suggestion.text}</span>

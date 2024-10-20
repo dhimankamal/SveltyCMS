@@ -18,24 +18,28 @@
 	import { currentChild, type FieldType } from '.';
 	import { extractData, getFieldName } from '@utils/utils';
 
-	export let field: FieldType;
 	const fieldName = getFieldName(field);
 
 	$translationProgress.show = false;
 
-	export let value = $collectionValue[fieldName];
 	export const WidgetData = async () => _data;
 
-	let MENU_CONTAINER: HTMLUListElement;
-	let showFields = false;
-	let depth = 0;
-	let _data: { [key: string]: any; children: any[] } = $mode === 'create' ? null : value;
-	let fieldsData = {};
+	let MENU_CONTAINER: HTMLUListElement = $state();
+	let showFields = $state(false);
+	let depth = $state(0);
+	let _data: { [key: string]: any; children: any[] } = $state($mode === 'create' ? null : value);
+	let fieldsData = $state({});
 	const saveMode = $mode;
-	let validationError: string | null = null;
+	let validationError: string | null = $state(null);
 
 	// Validation schema for each menu layer
 	import * as z from 'zod';
+	interface Props {
+		field: FieldType;
+		value?: any;
+	}
+
+	let { field, value = $collectionValue[fieldName] }: Props = $props();
 
 	const widgetSchema = z.object({
 		name: z.string().min(1, 'Menu name is required'),

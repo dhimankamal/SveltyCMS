@@ -13,10 +13,14 @@
 	import * as m from '@src/paraglide/messages';
 
 	// Add props for custom text
-	export let customTopText: string | undefined = undefined;
-	export let customBottomText: string | undefined = undefined;
+	interface Props {
+		customTopText?: string | undefined;
+		customBottomText?: string | undefined;
+	}
 
-	let isAnimating = true;
+	let { customTopText = undefined, customBottomText = undefined }: Props = $props();
+
+	let isAnimating = $state(true);
 	let animationTimeout: ReturnType<typeof setTimeout> | null = null;
 	const animationDuration = 20000; // 20 seconds
 
@@ -37,10 +41,10 @@
 
 <div class="absolute inset-0 flex items-center justify-center bg-black shadow-2xl" role="status" aria-live="polite">
 	{#if isAnimating}
-		<div class="relative h-[150px] w-[150px] rounded-full border-[7px] border-error-500 border-x-transparent" id="loader" />
-		<div class="absolute h-[170px] w-[170px] rounded-full border-[6px] border-success-400 border-x-transparent" id="loader2" />
-		<div class="absolute h-[190px] w-[190px] rounded-full border-[5px] border-tertiary-400 border-x-transparent" id="loader3" />
-		<div class="absolute h-[210px] w-[210px] rounded-full border-[4px] border-surface-400 border-x-transparent" id="loader4" />
+		<div class="relative h-[150px] w-[150px] rounded-full border-[7px] border-error-500 border-x-transparent" id="loader"></div>
+		<div class="absolute h-[170px] w-[170px] rounded-full border-[6px] border-success-400 border-x-transparent" id="loader2"></div>
+		<div class="absolute h-[190px] w-[190px] rounded-full border-[5px] border-tertiary-400 border-x-transparent" id="loader3"></div>
+		<div class="absolute h-[210px] w-[210px] rounded-full border-[4px] border-surface-400 border-x-transparent" id="loader4"></div>
 	{/if}
 	<div class="absolute flex flex-col items-center justify-center rounded-full bg-transparent p-6 uppercase text-black dark:text-white">
 		<div>{customTopText || m.loading_pleasewait()}</div>

@@ -8,7 +8,7 @@
 
 	const dispatch = createEventDispatcher();
 
-	let filters = {
+	let filters = $state({
 		brightness: 0,
 		contrast: 0,
 		saturation: 0,
@@ -17,7 +17,7 @@
 		sepia: false,
 		invert: false,
 		grayscale: false
-	};
+	});
 
 	function applyFilter(filterType: string, value: number | boolean) {
 		filters[filterType] = value;
@@ -55,7 +55,7 @@
 <div class="wrapper">
 	<h3 class=" relative text-center text-lg font-bold text-tertiary-500 dark:text-primary-500">Filter</h3>
 
-	<button on:click={exitShapeOverlay} class="variant-ghost-primary btn-icon absolute -top-2 right-2 font-bold"> Exit </button>
+	<button onclick={exitShapeOverlay} class="variant-ghost-primary btn-icon absolute -top-2 right-2 font-bold"> Exit </button>
 	<div class="grid grid-cols-2 gap-2">
 		<label class="flex flex-col">
 			<span class="mb-1">Brightness: <span class="text-tertiary-500 dark:text-primary-500">{formatValue(filters.brightness)} </span></span>
@@ -65,7 +65,7 @@
 				max="1"
 				step="0.05"
 				bind:value={filters.brightness}
-				on:input={() => applyFilter('brightness', filters.brightness)}
+				oninput={() => applyFilter('brightness', filters.brightness)}
 				class="range range-primary"
 			/>
 		</label>
@@ -77,7 +77,7 @@
 				max="100"
 				step="5"
 				bind:value={filters.contrast}
-				on:input={() => applyFilter('contrast', filters.contrast)}
+				oninput={() => applyFilter('contrast', filters.contrast)}
 				class="range range-primary"
 			/>
 		</label>
@@ -89,7 +89,7 @@
 				max="10"
 				step="0.1"
 				bind:value={filters.saturation}
-				on:input={() => applyFilter('saturation', filters.saturation)}
+				oninput={() => applyFilter('saturation', filters.saturation)}
 				class="range range-primary"
 			/>
 		</label>
@@ -101,7 +101,7 @@
 				max="360"
 				step="5"
 				bind:value={filters.hue}
-				on:input={() => applyFilter('hue', filters.hue)}
+				oninput={() => applyFilter('hue', filters.hue)}
 				class="range range-primary"
 			/>
 		</label>
@@ -113,7 +113,7 @@
 				max="40"
 				step="1"
 				bind:value={filters.blur}
-				on:input={() => applyFilter('blur', filters.blur)}
+				oninput={() => applyFilter('blur', filters.blur)}
 				class="range range-primary"
 			/>
 		</label>
@@ -124,7 +124,7 @@
 			<input
 				type="checkbox"
 				bind:checked={filters.sepia}
-				on:change={() => applyFilter('sepia', filters.sepia)}
+				onchange={() => applyFilter('sepia', filters.sepia)}
 				class="checkbox-primary checkbox mr-2"
 			/>
 			Sepia
@@ -133,7 +133,7 @@
 			<input
 				type="checkbox"
 				bind:checked={filters.invert}
-				on:change={() => applyFilter('invert', filters.invert)}
+				onchange={() => applyFilter('invert', filters.invert)}
 				class="checkbox-primary checkbox mr-2"
 			/>
 			Invert
@@ -142,7 +142,7 @@
 			<input
 				type="checkbox"
 				bind:checked={filters.grayscale}
-				on:change={() => applyFilter('grayscale', filters.grayscale)}
+				onchange={() => applyFilter('grayscale', filters.grayscale)}
 				class="checkbox-primary checkbox mr-2"
 			/>
 			Grayscale
@@ -150,7 +150,7 @@
 	</div>
 
 	<div class="mt-4 flex justify-between space-x-2">
-		<button on:click={resetFilters} class="variant-filled-error btn w-full">Reset Filters</button>
-		<button on:click={exitFilters} class="variant-filled-primary btn w-full">Apply</button>
+		<button onclick={resetFilters} class="variant-filled-error btn w-full">Reset Filters</button>
+		<button onclick={exitFilters} class="variant-filled-primary btn w-full">Apply</button>
 	</div>
 </div>

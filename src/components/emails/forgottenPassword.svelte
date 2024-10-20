@@ -9,12 +9,14 @@
 
 	// Components
 	import SiteName from '@components/SiteName.svelte';
-
-	export let tokenLink = dev ? publicEnv.HOST_DEV : publicEnv.HOST_PROD;
-
 	// ParaglideJS
 	import * as m from '@src/paraglide/messages';
+
+	// Stores
 	import { systemLanguage } from '@stores/store';
+
+	// Readable ExpireIn time sec to year
+	import { ReadableExpireIn } from '@utils/utils';
 
 	// Svelty-email
 	import { Button, Container, Head, Hr, Html, Img, Link, Preview, Section, Text } from 'svelty-email';
@@ -25,15 +27,16 @@
 		token: string;
 		expiresIn: string;
 	}
-	export let email: EmailProps['email'];
 
-	//TODO: send rest to domain? Token and delete used token
-	export let token: EmailProps['token'];
-	export let resetLink: EmailProps['resetLink'];
-	export let expiresIn: EmailProps['expiresIn'];
+	interface Props {
+		tokenLink?: any;
+		email: EmailProps['email'];
+		token: EmailProps['token'];
+		resetLink: EmailProps['resetLink'];
+		expiresIn: EmailProps['expiresIn'];
+	}
 
-	// Readable ExpireIn time sec to year
-	import { ReadableExpireIn } from '@utils/utils';
+	let { tokenLink = dev ? publicEnv.HOST_DEV : publicEnv.HOST_PROD, email, token, resetLink, expiresIn }: Props = $props();
 
 	const fontFamily = '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif';
 

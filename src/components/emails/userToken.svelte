@@ -12,6 +12,8 @@
 
 	// ParaglideJS
 	import * as m from '@src/paraglide/messages';
+
+	// Stores
 	import { systemLanguage } from '@stores/store';
 
 	// Svelty-email
@@ -26,12 +28,22 @@
 		expiresIn?: string;
 		expiresInLabel?: string;
 	}
-	export let email: EmailProps['email'];
 	// export let sitename: EmailProps['sitename'];
-	export let role: EmailProps['role'];
-	export let token: EmailProps['token'];
-	export let expiresInLabel: EmailProps['expiresInLabel'];
-	export let tokenLink = `${dev ? publicEnv.HOST_DEV : publicEnv.HOST_PROD}/login?regToken=${token}`;
+	interface Props {
+		email: EmailProps['email'];
+		role: EmailProps['role'];
+		token: EmailProps['token'];
+		expiresInLabel: EmailProps['expiresInLabel'];
+		tokenLink?: any;
+	}
+
+	let {
+		email,
+		role,
+		token,
+		expiresInLabel,
+		tokenLink = `${dev ? publicEnv.HOST_DEV : publicEnv.HOST_PROD}/login?regToken=${token}`
+	}: Props = $props();
 
 	const fontFamily = '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif';
 

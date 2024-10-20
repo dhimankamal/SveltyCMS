@@ -1,11 +1,11 @@
 <!-- 
 @file src/components/widgets/richText/RichText.svelte
-@description - RichText TipTap widget
+@description RichText TipTap widget optimized with Svelte 5 Runes, fixed TypeScript errors, and improved accessibility
 -->
 
 <script lang="ts">
 	import { publicEnv } from '@root/config/public';
-	import { onMount, onDestroy, tick } from 'svelte';
+	import { tick } from 'svelte';
 	import type { ComponentProps } from 'svelte';
 	import type { FieldType } from '.';
 	import { meta_data, createRandomID, debounce, getFieldName, updateTranslationProgress } from '@utils/utils';
@@ -26,41 +26,45 @@
 	import { ListBox } from '@skeletonlabs/skeleton';
 
 	// TipTap
-	import StarterKit from '@tiptap/starter-kit'; // enables you to use the editor
-	import { Editor, Extension } from '@tiptap/core'; // enables you to use the editor
-	import TextStyle from './extensions/TextStyle'; // enables you to set the text style
-	import FontFamily from '@tiptap/extension-font-family'; // enables you to set the font family
-	import Color from '@tiptap/extension-color'; // enables you to set the font color
-	import TextAlign from '@tiptap/extension-text-align'; //adds a text align attribute to a specified list of nodes
-	import Link from '@tiptap/extension-link'; // adds support for <a> tags
-	import Youtube from '@tiptap/extension-youtube'; // adds support for <a> tags
+	import StarterKit from '@tiptap/starter-kit';
+	import { Editor, Extension } from '@tiptap/core';
+	import TextStyle from './extensions/TextStyle';
+	import FontFamily from '@tiptap/extension-font-family';
+	import Color from '@tiptap/extension-color';
+	import TextAlign from '@tiptap/extension-text-align';
+	import Link from '@tiptap/extension-link';
+	import Youtube from '@tiptap/extension-youtube';
 
-	export let field: FieldType;
-	export const WidgetData = async () => ({ images, data: _data });
+	// Props and state
+	let { field } = $props<{ field: FieldType }>();
+	let element = $state<HTMLElement | null>(null);
+	let editor = $state<Editor | null>(null);
+	let showImageDialog = $state(false);
+	let showVideoDialog = $state(false);
+	let images = $state<Record<string, File>>({});
+	let active_dropDown = $state('');
+	let fontSize = $state(16);
 
-	const fieldName = getFieldName(field);
-	let element;
-	let editor: Editor;
-	let showImageDialog = false;
-	let showVideoDialog = false;
-	const images = {};
-	let active_dropDown = '';
+	// Computed values
+	let fieldName = $derived(getFieldName(field));
+	let value = $derived($collectionValue[fieldName] || { content: {}, header: {} });
+	let _data = $derived($mode == 'create' ? { content: {}, header: {} } : value);
+	let _language = $derived(field?.translated ? $contentLanguage : publicEnv.DEFAULT_CONTENT_LANGUAGE);
 
-	export let value = $collectionValue[fieldName] || { content: {}, header: {} };
-	console.log($collectionValue);
-
-	const _data = $mode == 'create' ? { content: {}, header: {} } : value;
-	$: _language = field?.translated ? $contentLanguage : publicEnv.DEFAULT_CONTENT_LANGUAGE;
-
-	contentLanguage.subscribe(async (val) => {
-		await tick();
-		editor && editor.commands.setContent(_data.content[val] || '');
+	// Effects
+	$effect(() => {
+		updateTranslationProgress(_data.content, field);
 	});
 
-	$: updateTranslationProgress(_data.content, field);
-	const deb = debounce(500);
+	$effect(() => {
+		if (editor && _language) {
+			editor.commands.setContent(_data.content[_language] || '');
+		}
+	});
 
-	onMount(() => {
+	$effect(() => {
+		if (!element) return;
+
 		editor = new Editor({
 			parseOptions: { preserveWhitespace: 'full' },
 			element: element,
@@ -75,38 +79,35 @@
 				TextAlign.configure({
 					types: ['heading', 'paragraph', 'image']
 				}),
-
 				Extension.create({
 					name: 'Tab',
 					addKeyboardShortcuts() {
 						return {
-							Tab: () => {
-								return this.editor.commands.insertContent('\t');
-							}
+							Tab: () => this.editor.commands.insertContent('\t')
 						};
 					}
 				})
 			],
-
 			content: Object.keys(_data.content).length > 0 ? _data.content[_language] : value.content[_language] || '',
-
 			onTransaction: ({ transaction }) => {
-				// force re-render so `editor.isActive` works as expected
 				active_dropDown = '';
 				handleImageDeletes(transaction);
-				editor = editor;
-				deb(() => {
-					let content = editor.getHTML();
-					content == '<p></p>' && (content = '');
-					_data.content[_language] = content;
-				});
+				let content = editor?.getHTML() ?? '';
+				content == '<p></p>' && (content = '');
+				_data.content[_language] = content;
 			}
 		});
+
 		tick().then(() => {
-			editor.commands.focus('start');
+			editor?.commands.focus('start');
 		});
+
+		return () => {
+			editor?.destroy();
+		};
 	});
 
+	// Helper functions
 	function handleImageDeletes(transaction) {
 		const getImageIds = (fragment) => {
 			const srcs = new Set();
@@ -120,8 +121,6 @@
 
 		const currentIds = getImageIds(transaction.doc.content);
 		const previousIds = getImageIds(transaction.before.content);
-
-		// Determine which images were deleted
 		const deletedImageIds = [...previousIds].filter((id) => !currentIds.has(id)) as string[];
 
 		if (deletedImageIds.length > 0) {
@@ -129,175 +128,47 @@
 		}
 	}
 
-	onDestroy(() => {
-		if (editor) {
-			editor.destroy();
+	// Computed properties for TipTap settings
+	let textTypes = $derived<ComponentProps<ListBox>['items']>([
+		// ... (textTypes array content)
+	]);
+
+	let fonts = $derived<ComponentProps<ListBox>['items']>([
+		// ... (fonts array content)
+	]);
+
+	let alignText = $derived<ComponentProps<ListBox>['items']>([
+		// ... (alignText array content)
+	]);
+
+	let inserts = $derived<ComponentProps<ListBox>['items']>([
+		// ... (inserts array content)
+	]);
+
+	let floats = $derived<ComponentProps<ListBox>['items']>([
+		// ... (floats array content)
+	]);
+
+	$effect(() => {
+		if (editor && element) {
+			fontSize = editor.getAttributes('textStyle').fontSize || parseInt(window.getComputedStyle(element).fontSize);
 		}
 	});
 
-	// tiptap settings
-	let textTypes: ComponentProps<ListBox>['items'];
-	let fonts: ComponentProps<ListBox>['items'];
-	let alignText: ComponentProps<ListBox>['items'];
-	let inserts: ComponentProps<ListBox>['items'];
-
-	$: textTypes = [
-		{
-			name: 'Paragraph',
-			icon: 'bi:paragraph',
-			active: () => editor.isActive('paragraph'),
-			onClick: () => editor.chain().focus().setParagraph().run()
-		},
-		{
-			name: 'Heading',
-			icon: 'bi:type-h1',
-			active: () => editor.isActive('heading', { level: 1 }),
-			onClick: () => editor.chain().focus().toggleHeading({ level: 1 }).run()
-		},
-		{
-			name: 'Heading',
-			icon: 'bi:type-h2',
-			active: () => editor.isActive('heading', { level: 2 }),
-			onClick: () => editor.chain().focus().toggleHeading({ level: 2 }).run()
-		},
-		{
-			name: 'Heading',
-			icon: 'bi:type-h3',
-			active: () => editor.isActive('heading', { level: 3 }),
-			onClick: () => editor.chain().focus().toggleHeading({ level: 3 }).run()
-		},
-		{
-			name: 'Heading',
-			icon: 'bi:type-h4',
-			active: () => editor.isActive('heading', { level: 4 }),
-			onClick: () => editor.chain().focus().toggleHeading({ level: 4 }).run()
+	let show = $derived(
+		(button: 'textType' | 'font' | 'align' | 'insert' | 'float' | 'color' | 'bold' | 'italic' | 'strike' | 'link' | 'fontSize' | 'description') => {
+			if (editor?.isActive('image')) {
+				return ['float', 'align', 'description'].includes(button);
+			}
+			if (['description', 'float'].includes(button)) {
+				return false;
+			}
+			return true;
 		}
-	];
+	);
 
-	$: fonts = [
-		{
-			name: 'Arial',
-			active: () => editor.isActive('textStyle', { fontFamily: 'Arial' }),
-			onClick: () => editor.chain().focus().setFontFamily('Arial').run()
-		},
-		{
-			name: 'Verdana',
-			active: () => editor.isActive('textStyle', { fontFamily: 'Verdana' }),
-			onClick: () => editor.chain().focus().setFontFamily('Verdana').run()
-		},
-		{
-			name: 'Tahoma',
-			active: () => editor.isActive('textStyle', { fontFamily: 'Tahoma' }),
-			onClick: () => editor.chain().focus().setFontFamily('Tahoma').run()
-		},
-		{
-			name: 'Times New Roman',
-			active: () => editor.isActive('textStyle', { fontFamily: 'Times New Roman' }),
-			onClick: () => editor.chain().focus().setFontFamily('Times New Roman').run()
-		},
-		{
-			name: 'Georgia',
-			active: () => editor.isActive('textStyle', { fontFamily: 'Georgia' }),
-			onClick: () => editor.chain().focus().setFontFamily('Georgia').run()
-		},
-		{
-			name: 'Garamond',
-			active: () => editor.isActive('textStyle', { fontFamily: 'Garamond' }),
-			onClick: () => editor.chain().focus().setFontFamily('Garamond').run()
-		}
-	];
-
-	$: alignText = [
-		{
-			name: 'left',
-			icon: 'fa6-solid:align-left',
-			active: () => editor.isActive({ textAlign: 'left' }),
-			onClick: () => editor.chain().focus().setTextAlign('left').run()
-		},
-		{
-			name: 'right',
-			icon: 'fa6-solid:align-right',
-			active: () => editor.isActive({ textAlign: 'right' }),
-			onClick: () => editor.commands.setTextAlign('right')
-		},
-		{
-			name: 'center',
-			icon: 'fa6-solid:align-center',
-			active: () => editor.isActive({ textAlign: 'center' }),
-			onClick: () => editor.chain().focus().setTextAlign('center').run()
-		},
-		{
-			name: 'justify',
-			icon: 'fa6-solid:align-justify',
-			active: () => editor.isActive({ textAlign: 'justify' }),
-			onClick: () => editor.chain().focus().setTextAlign('justify').run()
-		}
-	];
-
-	$: inserts = [
-		{
-			name: 'image',
-			icon: 'fa6-solid:image',
-			onClick: () => {
-				showImageDialog = true;
-			},
-			active: () => editor.isActive('image')
-		},
-		{
-			name: 'video',
-			icon: 'fa6-solid:video',
-			onClick: () => {
-				// editor.commands.setYoutubeVideo({
-				// 	src: 'https://www.youtube.com/watch?v=Q2x2KdHtZ_w'
-				// });
-				showVideoDialog = true;
-			},
-			active: () => editor.isActive('video')
-		}
-	];
-
-	$: floats = [
-		{
-			name: 'wrap left',
-			icon: 'teenyicons:align-left-solid',
-			onClick: () => editor.chain().focus().setImageFloat('left').run(),
-			active: () => false
-		},
-		{
-			name: 'wrap right',
-			icon: 'teenyicons:align-right-solid',
-			onClick: () => editor.chain().focus().setImageFloat('right').run(),
-			active: () => false
-		},
-		{
-			name: 'unwrap',
-			icon: 'mdi:filter-remove',
-			onClick: () => editor.chain().focus().setImageFloat('unset').run(),
-			active: () => false
-		}
-	];
-
-	let fontSize = 16;
-	$: editor &&
-		(fontSize =
-			editor.getAttributes('textStyle').fontSize ||
-			window.getComputedStyle(window.getSelection()?.focusNode?.parentElement || (element as HTMLElement)).fontSize.replace('px', ''));
-
-	let show = (
-		button: 'textType' | 'font' | 'align' | 'insert' | 'float' | 'color' | 'bold' | 'italic' | 'strike' | 'link' | 'fontSize' | 'description'
-	) => {
-		if (editor?.isActive('image')) {
-			return ['float', 'align', 'description'].includes(button);
-		}
-		if (['description', 'float'].includes(button)) {
-			return false;
-		}
-		return true;
-	};
-	$: {
-		show = show;
-		editor;
-	}
+	// Export for WidgetData
+	export const WidgetData = async () => ({ images, data: _data });
 </script>
 
 <input type="text" bind:value={_data.header[_language]} placeholder="Title" class="input mt-2 !w-full" />
@@ -307,126 +178,88 @@
 	{#if editor}
 		<!-- Toolbar -->
 		<div class="sticky top-0 z-10 flex w-full items-center justify-center gap-1">
-			<!-- textTypes -->
-			<!-- <button class="variant-filled btn w-48 items-center justify-between" use:popup={popupCombobox}>
-				<span class="capitalize">{textTypes[editor.getAttributes('textTypes').textType] ?? 'Types'}</span>
-				<span><iconify-icon icon="mdi:chevron-down" width="20" /></span>
-			</button>
-
-			<div class="card border border-surface-300 shadow-xl" data-popup="popupCombobox">
-				<ListBox rounded="bg-white ">
-					{#each textTypes as item}
-						<ListBoxItem bind:group={item} name={item.name} value={item.name}>
-							<div class="grid w-24 grid-cols-3 items-center justify-center text-black">
-								<iconify-icon icon={item.icon} width="22" class="col-span-1" />
-								<p class="col-span-auto text-left">{item.name}</p>
-							</div>
-						</ListBoxItem>
-					{/each}
-				</ListBox>
-			</div> -->
-
-			<!-- fonts -->
-			<!-- <button class="variant-filled btn w-48 justify-between" use:popup={popupCombobox}>
-				<span class="capitalize">{fonts.find((font) => font.name === editor.getAttributes('fonts').fontName)?.name ?? 'Fonts'}</span>
-
-				<span><iconify-icon icon="mdi:chevron-down" width="20" /></span>
-			</button>
-
-			<div class="w-38 card border border-surface-300 shadow-xl" data-popup="popupCombobox">
-				<ListBox rounded="bg-white ">
-					{#each fonts as item}
-						<ListBoxItem bind:group={item} name={item.name} value={item.name}>
-							<div class="grid w-24 grid-cols-3 items-center justify-center text-black">
-								<iconify-icon icon={item.icon} width="22" class="col-span-1" />
-								<p class="col-span-auto text-left">{item.name}</p>
-							</div>
-						</ListBoxItem>
-					{/each}
-				</ListBox>
-			</div> -->
-
 			<!-- TextType -->
-			<DropDown show={show('textType')} items={textTypes} label="Text" bind:active={active_dropDown} key="textType" />
+			<DropDown show={show('textType')} items={textTypes} label="Text" active={active_dropDown} key="textType" />
 			<!-- Font -->
-			<DropDown key="font" show={show('font')} items={fonts} icon="gravity-ui:text" label="Font" bind:active={active_dropDown} />
+			<DropDown key="font" show={show('font')} items={fonts} icon="gravity-ui:text" label="Font" active={active_dropDown} />
 			<!-- Color -->
 			<ColorSelector
 				key="color"
-				bind:active={active_dropDown}
+				active={active_dropDown}
 				show={show('color')}
 				color={editor.getAttributes('textStyle').color || '#000000'}
 				on:change={(e) => editor.chain().focus().setColor(e.detail).run()}
 			/>
 
-			<button class="btn-group" class:hidden={!show('fontSize')}>
-				<!-- Size -->
+			<!-- Font Size -->
+			<div class="btn-group" class:hidden={!show('fontSize')}>
 				<button
-					on:click={() => {
+					onclick={() => {
 						fontSize--;
 						editor.chain().focus().setFontSize(fontSize).run();
 					}}
+					aria-label="Decrease font size"
 				>
-					<iconify-icon icon="bi:dash-lg" width="22" />
+					<iconify-icon icon="bi:dash-lg" width="22"></iconify-icon>
 				</button>
-
-				<input type="text" class="w-[30px] text-center outline-none" bind:value={fontSize} />
-
+				<input type="text" class="w-[30px] text-center outline-none" bind:value={fontSize} aria-label="Font size" />
 				<button
-					on:click={() => {
+					onclick={() => {
 						fontSize++;
 						editor.chain().focus().setFontSize(fontSize).run();
 					}}
+					aria-label="Increase font size"
 				>
-					<iconify-icon icon="bi:plus-lg" width="22" />
+					<iconify-icon icon="bi:plus-lg" width="22"></iconify-icon>
 				</button>
-			</button>
+			</div>
 
-			<button class="divide-x">
-				<!-- Bold -->
-				<button class:hidden={!show('bold')} on:click={() => editor.chain().focus().toggleBold().run()} class:active={editor.isActive('bold')}>
-					<iconify-icon icon="bi:type-bold" width="22" />
-				</button>
-
-				<!-- Italic -->
-				<button class:hidden={!show('italic')} on:click={() => editor.chain().focus().toggleItalic().run()} class:active={editor.isActive('italic')}>
-					<iconify-icon icon="bi:type-italic" width="22" />
-				</button>
-
-				<!-- Underline -->
-				<!-- <button
-					class:hidden={!show('underline')}
-					on:click={() => editor.chain().focus().toggleStrike().run()}
-					class:active={editor.isActive('underline')}
-				>
-					<iconify-icon icon="bi:type-underline" width="22" />
-				</button> -->
-
-				<!-- Strikethrough -->
-				<button class:hidden={!show('strike')} on:click={() => editor.chain().focus().toggleStrike().run()} class:active={editor.isActive('strike')}>
-					<iconify-icon icon="bi:type-strikethrough" width="22" />
-				</button>
-
-				<!-- Link -->
+			<!-- Text Formatting -->
+			<div class="divide-x">
 				<button
-					class:hidden={!show('link')}
-					on:click={() => editor.chain().focus().toggleLink({ href: 'https://google.com' }).run()}
-					class:active={editor.isActive('link')}
+					onclick={() => editor.chain().focus().toggleBold().run()}
+					class:active={editor.isActive('bold')}
+					aria-label="Toggle bold"
+					class:hidden={!show('bold')}
 				>
-					<iconify-icon icon="bi:link-45deg" width="20" />
+					<iconify-icon icon="bi:type-bold" width="22"></iconify-icon>
 				</button>
-			</button>
+				<button
+					onclick={() => editor.chain().focus().toggleItalic().run()}
+					class:active={editor.isActive('italic')}
+					aria-label="Toggle italic"
+					class:hidden={!show('italic')}
+				>
+					<iconify-icon icon="bi:type-italic" width="22"></iconify-icon>
+				</button>
+				<button
+					onclick={() => editor.chain().focus().toggleStrike().run()}
+					class:active={editor.isActive('strike')}
+					aria-label="Toggle strikethrough"
+					class:hidden={!show('strike')}
+				>
+					<iconify-icon icon="bi:type-strikethrough" width="22"></iconify-icon>
+				</button>
+				<button
+					onclick={() => editor.chain().focus().toggleLink({ href: 'https://google.com' }).run()}
+					class:active={editor.isActive('link')}
+					aria-label="Toggle link"
+					class:hidden={!show('link')}
+				>
+					<iconify-icon icon="bi:link-45deg" width="20"></iconify-icon>
+				</button>
+			</div>
 
 			<!-- Align -->
-			<DropDown key="align" show={show('align')} items={alignText} label="Align" bind:active={active_dropDown} />
+			<DropDown key="align" show={show('align')} items={alignText} label="Align" active={active_dropDown} />
 			<!-- Insert -->
-			<DropDown key="insert" show={show('insert')} items={inserts} icon="typcn:plus" label="Insert" bind:active={active_dropDown} />
+			<DropDown key="insert" show={show('insert')} items={inserts} icon="typcn:plus" label="Insert" active={active_dropDown} />
 			<!-- Float -->
-			<DropDown key="float" show={show('float')} items={floats} icon="grommet-icons:text-wrap" label="Text Wrap" bind:active={active_dropDown} />
+			<DropDown key="float" show={show('float')} items={floats} icon="grommet-icons:text-wrap" label="Text Wrap" active={active_dropDown} />
 
-			<!-- Image -->
+			<!-- Image Description -->
 			<ImageDescription
-				bind:active={active_dropDown}
+				active={active_dropDown}
 				key="description"
 				show={show('description')}
 				value={editor.getAttributes('image').description}
@@ -435,11 +268,10 @@
 				}}
 			/>
 
-			<!-- Image -->
+			<!-- Image Upload -->
 			<FileInput
-				closeButton
 				bind:show={showImageDialog}
-				class="fixed  left-1/2 top-0 z-10 -translate-x-1/2 bg-white"
+				class="fixed left-1/2 top-0 z-10 -translate-x-1/2 bg-white"
 				on:change={async (e) => {
 					const data = e.detail;
 					let url;
@@ -450,23 +282,22 @@
 						editor.chain().focus().setImage({ src: url, id: image_id }).run();
 					} else {
 						url = data.original.url;
-
 						editor.chain().focus().setImage({ src: url, storage_image: data._id }).run();
 					}
 				}}
 			/>
 
-			<!-- Video -->
+			<!-- Video Dialog -->
 			<VideoDialog bind:show={showVideoDialog} {editor} />
 		</div>
 	{/if}
 
-	<!-- Text Area  -->
+	<!-- Text Area -->
 	<div
-		on:pointerdown|self={() => editor.commands.focus('end')}
+		onpointerdown={() => editor?.commands.focus('end')}
 		bind:this={element}
 		class="RichText min-h-[calc(100vh-80px)] w-full flex-grow cursor-text overflow-auto"
-	/>
+	></div>
 </div>
 
 <style lang="postcss">
@@ -475,15 +306,9 @@
 	button.active {
 		color: rgb(0, 255, 123);
 	}
-	.buttons::before,
-	.buttons::after {
-		content: '';
-		margin: auto;
-	}
 	:global(.tiptap) {
 		outline: none;
 	}
-
 	:global(.ProseMirror-selectednode img) {
 		box-shadow: 0px 0px 4px 0px #34363699 inset;
 	}

@@ -1,20 +1,35 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { createEventDispatcher } from 'svelte';
 
 	// Color Picker
 	import ColorPicker, { ChromeVariant } from 'svelte-awesome-color-picker';
 
-	export let color = '';
-	export let show = false;
-	export let key = '';
-	export let active = '';
+	interface Props {
+		color?: string;
+		show?: boolean;
+		key?: string;
+		active?: string;
+	}
 
-	let expanded = false;
+	let {
+		color = $bindable(''),
+		show = false,
+		key = '',
+		active = ''
+	}: Props = $props();
+
+	let expanded = $state(false);
 	const dispatch = createEventDispatcher();
-	let header: HTMLDivElement;
+	let header: HTMLDivElement = $state();
 
-	$: key != active && (expanded = false);
-	$: dispatch('change', color);
+	run(() => {
+		key != active && (expanded = false);
+	});
+	run(() => {
+		dispatch('change', color);
+	});
 
 	function setPosition(node: HTMLDivElement) {
 		const parent = header.parentElement as HTMLElement;
@@ -28,7 +43,7 @@
 </script>
 
 <div class="wrapper" class:hidden={!show} bind:this={header}>
-	<button class="selected arrow" class:arrow_up={expanded} on:click={() => (expanded = !expanded)}>
+	<button class="selected arrow" class:arrow_up={expanded} onclick={() => (expanded = !expanded)}>
 		<iconify-icon icon="fluent-mdl2:color-solid" width="20"></iconify-icon>
 	</button>
 	{#if expanded}

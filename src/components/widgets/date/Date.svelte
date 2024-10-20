@@ -4,6 +4,8 @@
 -->
 
 <script lang="ts">
+	import { preventDefault } from 'svelte/legacy';
+
 	import type { FieldType } from '.';
 	import { publicEnv } from '@root/config/public';
 	import { getFieldName } from '@utils/utils';
@@ -15,14 +17,18 @@
 	// zod validation
 	import * as z from 'zod';
 
-	export let field: FieldType;
 
 	const fieldName = getFieldName(field);
-	export let value = $collectionValue[fieldName] || {};
+	interface Props {
+		field: FieldType;
+		value?: any;
+	}
 
-	const _data = $mode === 'create' ? {} : value;
+	let { field, value = $collectionValue[fieldName] || {} }: Props = $props();
+
+	const _data = $state($mode === 'create' ? {} : value);
 	const _language = publicEnv.DEFAULT_CONTENT_LANGUAGE;
-	let validationError: string | null = null;
+	let validationError: string | null = $state(null);
 	let debounceTimeout: number | undefined;
 
 	export const WidgetData = async () => _data;
@@ -70,7 +76,7 @@
 <input
 	type="date"
 	bind:value={_data[_language]}
-	on:input|preventDefault={validateInput}
+	oninput={preventDefault(validateInput)}
 	class="input text-black dark:text-primary-500"
 	aria-invalid={!!validationError}
 	aria-describedby={validationError ? `${field.db_fieldName}-error` : undefined}

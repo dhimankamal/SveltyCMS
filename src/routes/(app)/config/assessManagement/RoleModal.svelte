@@ -12,15 +12,28 @@
 	import * as m from '@src/paraglide/messages';
 
 	// Props
-	/** Exposes parent props to this component. */
-	export let parent: SvelteComponent;
-	export let isEditMode: boolean;
-	export let currentRoleId: string;
-	export let roleName: string;
-	export let roleDescription: string;
-	export let currentGroupName: string;
+	
 	// export let availablePermissions = writable<Permission[]>([]);
-	export let selectedPermissions = [];
+	interface Props {
+		/** Exposes parent props to this component. */
+		parent: SvelteComponent;
+		isEditMode: boolean;
+		currentRoleId: string;
+		roleName: string;
+		roleDescription: string;
+		currentGroupName: string;
+		selectedPermissions?: any;
+	}
+
+	let {
+		parent,
+		isEditMode,
+		currentRoleId,
+		roleName = $bindable(),
+		roleDescription = $bindable(),
+		currentGroupName,
+		selectedPermissions = []
+	}: Props = $props();
 
 	const modalStore = getModalStore();
 
@@ -73,10 +86,10 @@
 			</label>
 		</form>
 		<footer class="modal-footer {parent.regionFooter} justify-between">
-			<button class="variant-outline-secondary btn" on:click={parent.onClose}>
+			<button class="variant-outline-secondary btn" onclick={parent.onClose}>
 				{m.button_cancel()}
 			</button>
-			<button on:click={saveRole} class="variant-filled-primary btn">{isEditMode ? 'Update' : 'Create Role'}</button>
+			<button onclick={saveRole} class="variant-filled-primary btn">{isEditMode ? 'Update' : 'Create Role'}</button>
 		</footer>
 	</div>
 {/if}

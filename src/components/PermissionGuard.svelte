@@ -8,15 +8,20 @@
 	import type { PermissionConfig } from '@src/auth/permissionCheck';
 
 	// Prop to receive permission configuration
-	export let config: PermissionConfig | undefined;
+	interface Props {
+		config: PermissionConfig | undefined;
+		children?: import('svelte').Snippet;
+	}
+
+	let { config, children }: Props = $props();
 
 	// Reactive variables from page store
-	$: user = $page.data.user;
-	$: permissions = $page.data.permissions || {};
-	$: permissionData = config?.contextId ? permissions[config.contextId] || {} : {};
-	$: isAdmin = user?.role?.toLowerCase() === 'admin'; // Ensure user object has role and check for admin
-	$: hasPermission = isAdmin || permissionData.hasPermission || false; // Admins always have permission
-	$: isRateLimited = permissionData.isRateLimited || false;
+	let user = $derived($page.data.user);
+	let permissions = $derived($page.data.permissions || {});
+	let permissionData = $derived(config?.contextId ? permissions[config.contextId] || {} : {});
+	let isAdmin = $derived(user?.role?.toLowerCase() === 'admin'); // Ensure user object has role and check for admin
+	let hasPermission = $derived(isAdmin || permissionData.hasPermission || false); // Admins always have permission
+	let isRateLimited = $derived(permissionData.isRateLimited || false);
 
 	// Debugging logs for development
 	// $: {
@@ -35,7 +40,7 @@
 <!-- Permission Handling -->
 {#if config}
 	{#if hasPermission && !isRateLimited}
-		<slot />
+		{@render children?.()}
 	{:else if isRateLimited}
 		<p>Rate limit reached. Please try again later.</p>
 	{/if}

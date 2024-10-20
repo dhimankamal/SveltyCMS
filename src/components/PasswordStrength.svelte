@@ -8,7 +8,11 @@
 	import { signUpFormSchema } from '@utils/formSchemas';
 	import type { z } from 'zod';
 
-	export let password: string = '';
+	interface Props {
+		password?: string;
+	}
+
+	let { password = '' }: Props = $props();
 
 	const MIN_PASSWORD_LENGTH = publicEnv.PASSWORD_STRENGTH || 8;
 	const YELLOW_LENGTH = MIN_PASSWORD_LENGTH + 3;
@@ -40,11 +44,11 @@
 		else return 'green';
 	}
 
-	$: score = calculateScore(password);
-	$: feedback = getFeedback(score);
-	$: color = getColor(score);
-	$: percentage = Math.min(100, (password.length / GREEN_LENGTH) * 100);
-	$: textColor = color === 'darkorange' ? 'black' : 'white';
+	let score = $derived(calculateScore(password));
+	let feedback = $derived(getFeedback(score));
+	let color = $derived(getColor(score));
+	let percentage = $derived(Math.min(100, (password.length / GREEN_LENGTH) * 100));
+	let textColor = $derived(color === 'darkorange' ? 'black' : 'white');
 </script>
 
 {#if password}

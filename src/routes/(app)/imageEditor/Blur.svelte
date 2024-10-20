@@ -6,11 +6,15 @@
 	import Konva from 'konva';
 	import { onMount, createEventDispatcher } from 'svelte';
 
-	export let stage: Konva.Stage;
-	export let layer: Konva.Layer;
-	export let imageNode: Konva.Image;
+	interface Props {
+		stage: Konva.Stage;
+		layer: Konva.Layer;
+		imageNode: Konva.Image;
+	}
 
-	let mosaicStrength = 10;
+	let { stage, layer, imageNode }: Props = $props();
+
+	let mosaicStrength = $state(10);
 	let blurRegion: Konva.Rect;
 	let transformer: Konva.Transformer;
 	let isSelecting = false;
@@ -215,13 +219,13 @@
 				min="1"
 				max="50"
 				bind:value={mosaicStrength}
-				on:input={updateMosaicStrength}
+				oninput={updateMosaicStrength}
 				class="h-2 w-full cursor-pointer rounded-full bg-gray-300"
 			/>
 		</div>
 	</div>
 	<div class="mt-4 flex justify-around gap-4">
-		<button on:click={resetMosaic} class="variant-filled-error btn">Reset</button>
-		<button on:click={applyFinalMosaic} class="variant-filled-primary btn">Apply</button>
+		<button onclick={resetMosaic} class="variant-filled-error btn">Reset</button>
+		<button onclick={applyFinalMosaic} class="variant-filled-primary btn">Apply</button>
 	</div>
 </div>

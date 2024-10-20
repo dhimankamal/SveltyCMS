@@ -4,6 +4,8 @@
 -->
 
 <script lang="ts">
+	import { preventDefault } from 'svelte/legacy';
+
 	import type { FieldType } from '.';
 	import { publicEnv } from '@root/config/public';
 
@@ -13,21 +15,25 @@
 
 	import { getFieldName } from '@utils/utils';
 
-	export let field: FieldType;
 
 	const fieldName = getFieldName(field);
-	export let value = $collectionValue[fieldName] || {};
 
-	const _data = $mode === 'create' ? {} : value;
+	const _data = $state($mode === 'create' ? {} : value);
 	const _language = publicEnv.DEFAULT_CONTENT_LANGUAGE;
 
-	let validationError: string | null = null;
+	let validationError: string | null = $state(null);
 	let debounceTimeout: number | undefined;
 
 	export const WidgetData = async () => _data;
 
 	// zod validation
 	import * as z from 'zod';
+	interface Props {
+		field: FieldType;
+		value?: any;
+	}
+
+	let { field, value = $collectionValue[fieldName] || {} }: Props = $props();
 
 	// Define the validation schema for the phone number widget
 	const widgetSchema = z.object({
@@ -77,7 +83,7 @@
 	<input
 		type="tel"
 		bind:value={_data[_language]}
-		on:input|preventDefault={handleInput}
+		oninput={preventDefault(handleInput)}
 		name={field?.db_fieldName}
 		id={field?.db_fieldName}
 		placeholder={field?.placeholder && field?.placeholder !== '' ? field?.placeholder : field?.db_fieldName}

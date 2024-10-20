@@ -4,6 +4,8 @@
 -->
 
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	// Stores
 	import { page } from '$app/stores';
 	import { tabSet } from '@stores/store';
@@ -76,10 +78,10 @@
 	};
 
 	// Form fields
-	let DBName = '';
-	let searchQuery = '';
+	let DBName = $state('');
+	let searchQuery = $state('');
 	const statuses = ['published', 'unpublished', 'draft', 'schedule', 'cloned'];
-	let autoUpdateSlug = true;
+	let autoUpdateSlug = $state(true);
 
 	function handleNameInput() {
 		if ($collectionValue.name) {
@@ -110,7 +112,7 @@
 		autoUpdateSlug = false;
 	}
 
-	$: {
+	run(() => {
 		if ($collectionValue) {
 			// Update DBName lowercase and replace Spaces
 			DBName = $collectionValue.name ? $collectionValue.name.toLowerCase().replace(/ /g, '_') : '';
@@ -126,7 +128,7 @@
 				dispatch('updatePageTitle', `Create <span class="text-primary-500">new</span> Collection`);
 			}
 		}
-	}
+	});
 
 	function handleNextClick() {
 		tabSet.set(1);
@@ -141,7 +143,7 @@
 	<div class="w-full items-center sm:flex">
 		<label for="name" class="flex-grow-1 relative mr-2 flex w-36">
 			{m.collection_name()} <span class="mx-1 text-error-500">*</span>
-			<iconify-icon icon="material-symbols:info" use:popup={NameTooltip} width="18" class="ml-1 text-tertiary-500 dark:text-primary-500" /></label
+			<iconify-icon icon="material-symbols:info" use:popup={NameTooltip} width="18" class="ml-1 text-tertiary-500 dark:text-primary-500"></iconify-icon></label
 		>
 
 		<div class="w-full">
@@ -150,7 +152,7 @@
 				required
 				id="name"
 				bind:value={$collectionValue.name}
-				on:input={handleNameInput}
+				oninput={handleNameInput}
 				placeholder={m.collection_name_placeholder()}
 				class="input text-black dark:text-primary-500"
 			/>
@@ -168,7 +170,7 @@
 			<div class="card variant-filled z-50 max-w-sm p-2" data-popup="Name">
 				<p>{m.collection_name_tooltip1()}</p>
 				<p>{m.collection_name_tooltip2()}</p>
-				<div class="variant-filled arrow" />
+				<div class="variant-filled arrow"></div>
 			</div>
 		</div>
 	</div>
@@ -181,13 +183,13 @@
 	<div class="w-full items-center sm:flex">
 		<label for="icon" class="flex-grow-1 relative mr-2 flex w-36">
 			{m.collectionname_labelicon()}
-			<iconify-icon icon="material-symbols:info" use:popup={IconTooltip} width="18" class="ml-1 text-tertiary-500 dark:text-primary-500" />
+			<iconify-icon icon="material-symbols:info" use:popup={IconTooltip} width="18" class="ml-1 text-tertiary-500 dark:text-primary-500"></iconify-icon>
 		</label>
 
 		<!-- Popup Tooltip with the arrow element -->
 		<div class="card variant-filled z-50 max-w-sm p-2" data-popup="Icon">
 			<p>{m.collection_icon_tooltip()}</p>
-			<div class="variant-filled arrow" />
+			<div class="variant-filled arrow"></div>
 		</div>
 
 		<IconifyPicker bind:searchQuery bind:icon={$collectionValue['icon']} bind:iconselected={$collectionValue['icon']} />
@@ -197,13 +199,13 @@
 	<div class="items-center sm:flex">
 		<label for="slug" class="flex-grow-1 relative mr-2 flex w-36">
 			{m.collection_slug()}
-			<iconify-icon icon="material-symbols:info" use:popup={SlugTooltip} width="18" class="ml-1 text-tertiary-500 dark:text-primary-500" />
+			<iconify-icon icon="material-symbols:info" use:popup={SlugTooltip} width="18" class="ml-1 text-tertiary-500 dark:text-primary-500"></iconify-icon>
 		</label>
 
 		<!-- Popup Tooltip with the arrow element -->
 		<div class="card variant-filled z-50 max-w-sm p-2" data-popup="Slug">
 			<p>{m.collection_slug_tooltip()}</p>
-			<div class="variant-filled arrow" />
+			<div class="variant-filled arrow"></div>
 		</div>
 
 		<input
@@ -219,13 +221,13 @@
 	<div class="items-center sm:flex">
 		<label for="description" class="flex-grow-1 relative mr-2 flex w-36">
 			{m.collectionname_description()}
-			<iconify-icon icon="material-symbols:info" use:popup={DescriptionTooltip} width="18" class="ml-1 text-tertiary-500 dark:text-primary-500" />
+			<iconify-icon icon="material-symbols:info" use:popup={DescriptionTooltip} width="18" class="ml-1 text-tertiary-500 dark:text-primary-500"></iconify-icon>
 		</label>
 
 		<!-- Popup Tooltip with the arrow element -->
 		<div class="card variant-filled z-50 max-w-sm p-2" data-popup="Description">
 			<p>{m.collection_description()}</p>
-			<div class="variant-filled arrow" />
+			<div class="variant-filled arrow"></div>
 		</div>
 
 		<textarea
@@ -235,20 +237,20 @@
 			bind:value={$collectionValue.description}
 			placeholder={m.collection_description_placeholder()}
 			class="input text-black dark:text-primary-500"
-		/>
+		></textarea>
 	</div>
 
 	<!-- Status -->
 	<div class="items-center sm:flex">
 		<label for="status" class="flex-grow-1 relative mr-2 flex w-36">
 			{m.collection_status()}
-			<iconify-icon icon="material-symbols:info" use:popup={StatusTooltip} width="18" class="ml-1 text-tertiary-500 dark:text-primary-500" />
+			<iconify-icon icon="material-symbols:info" use:popup={StatusTooltip} width="18" class="ml-1 text-tertiary-500 dark:text-primary-500"></iconify-icon>
 		</label>
 
 		<!-- Popup Tooltip with the arrow element -->
 		<div class="card variant-filled z-50 max-w-sm p-2" data-popup="Status">
 			<p>{m.collection_status_tooltip()}</p>
-			<div class="variant-filled arrow" />
+			<div class="variant-filled arrow"></div>
 		</div>
 
 		<select id="status" bind:value={$collectionValue.status} class="input text-black dark:text-primary-500">
@@ -262,5 +264,5 @@
 <!-- Buttons Cancel & Next-->
 <div class="mt-2 flex justify-between">
 	<a href="/config/collectionbuilder" class="variant-filled-secondary btn mt-2">{m.button_cancel()}</a>
-	<button type="button" on:click={handleNextClick} class="variant-filled-tertiary btn mt-2 dark:variant-filled-primary">{m.button_next()}</button>
+	<button type="button" onclick={handleNextClick} class="variant-filled-tertiary btn mt-2 dark:variant-filled-primary">{m.button_next()}</button>
 </div>

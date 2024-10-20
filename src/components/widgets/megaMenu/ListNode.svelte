@@ -1,10 +1,14 @@
+<!-- 
+@file src/components/widgets/megaMenu/ListNode.svelte
+@description ListNode component for a mega menu with nested structure and drag-and-drop functionality
+-->
+
 <script lang="ts">
-	import { onMount, tick } from 'svelte';
+	import { tick } from 'svelte';
 	import type { CustomDragEvent } from './types';
 	import { currentChild } from '.';
-	import XIcon from '@components/system/icons/XIcon.svelte';
 	import { debounce } from '@utils/utils';
-
+	import XIcon from '@components/system/icons/XIcon.svelte';
 	// Stores
 	import { translationProgress, contentLanguage, shouldShowNextButton, headerActionButton2 } from '@stores/store';
 	import { mode } from '@stores/collectionStore';
@@ -16,27 +20,54 @@
 	import { getModalStore, type ModalSettings } from '@skeletonlabs/skeleton';
 	const modalStore = getModalStore();
 
-	let expanded_list: boolean[] = [];
-	let ul: HTMLElement;
-	let fields_container: HTMLDivElement;
+	// Props
+	let {
+		self,
+		parent = null,
+		level = 0,
+		depth,
+		showFields,
+		maxDepth = 0,
+		expanded,
+		MENU_CONTAINER,
+		refresh = () => {
+			self?.children && (self.children = self.children);
+		}
+	} = $props<{
+		self: { [key: string]: any; children: any[] };
+		parent?: { [key: string]: any; children: any[] } | null;
+		level?: number;
+		depth: number;
+		showFields: boolean;
+		maxDepth?: number;
+		expanded: boolean;
+		MENU_CONTAINER: HTMLUListElement;
+		refresh?: () => void;
+	}>();
 
-	onMount(() => {
+	// State
+	let expanded_list = $state<boolean[]>([]);
+	let ul = $state<HTMLElement | null>(null);
+	let fields_container = $state<HTMLDivElement | null>(null);
+
+	// Effects
+	$effect(() => {
 		fields_container = document.getElementById('fields_container') as HTMLDivElement;
 	});
 
-	export let self: { [key: string]: any; children: any[] };
-	export let parent: { [key: string]: any; children: any[] } | null = null;
-	export let level = 0;
-	export let depth = 0;
-	export let showFields = false;
-	export let maxDepth = 0;
-	export let expanded = false;
-	export let MENU_CONTAINER: HTMLUListElement;
+	$effect(() => {
+		if (self?.children?.length) {
+			recalculateBorderHeight();
+		}
+	});
 
-	export let refresh = () => {
-		self?.children && (self.children = self.children);
-	};
+	$effect(() => {
+		if (showFields) {
+			$headerActionButton2 = XIcon;
+		}
+	});
 
+	// Functions
 	function setBorderHeight(node: HTMLElement | null | undefined) {
 		if (!node) return;
 
@@ -48,14 +79,6 @@
 		}, 0);
 	}
 
-	$: if (self?.children?.length) {
-		recalculateBorderHeight();
-		ul;
-	}
-	$: if (showFields) {
-		$headerActionButton2 = XIcon;
-	}
-
 	function recalculateBorderHeight() {
 		MENU_CONTAINER &&
 			MENU_CONTAINER.querySelectorAll('ul').forEach((el) => {
@@ -65,7 +88,7 @@
 
 	function notifyChildren(node: HTMLElement) {
 		node.addEventListener('custom:notifyChildren', (e) => {
-			const details = (e as any).detail as { clone_isExpanded: boolean };
+			const details = (e as CustomEvent).detail as { clone_isExpanded: boolean };
 			expanded_list.push(details.clone_isExpanded);
 			expanded_list = expanded_list;
 		});
@@ -106,7 +129,7 @@
 		refresh();
 	}
 
-	//DND action
+	// DND action
 	function drag(node: HTMLElement) {
 		node.addEventListener('custom:drag', async (e) => {
 			const event = e as CustomDragEvent;
@@ -123,8 +146,6 @@
 					})
 				);
 			} else {
-				// let isSameParent = self.children.indexOf(event.detail.children[event.detail.clone_index]) !== -1;
-
 				self?.children?.splice(event.detail.closest_index, 0, event.detail.dragged_item);
 				expanded_list.splice(event.detail.closest_index, 0, clone_isExpanded);
 				expanded_list = expanded_list;
@@ -158,11 +179,13 @@
 				const deb = debounce(3);
 				let old_closest: HTMLElement;
 				clone.onpointermove = (e) => {
-					if (e.clientY < fields_container.offsetTop || e.clientY > fields_container.offsetTop + fields_container.offsetHeight - 60) {
-						if (e.clientY < fields_container.offsetTop) {
-							fields_container.scrollBy(0, -5);
-						} else {
-							fields_container.scrollBy(0, 5);
+					if (fields_container) {
+						if (e.clientY < fields_container.offsetTop || e.clientY > fields_container.offsetTop + fields_container.offsetHeight - 60) {
+							if (e.clientY < fields_container.offsetTop) {
+								fields_container.scrollBy(0, -5);
+							} else {
+								fields_container.scrollBy(0, 5);
+							}
 						}
 					}
 					clone.style.top = e.clientY + 'px';
@@ -253,7 +276,7 @@
 </script>
 
 <!-- label boxes -->
-<button
+<div
 	use:notifyChildren
 	on:click={() => {
 		if (expanded) {
@@ -267,6 +290,9 @@
 	{window.screen.width <= 700
 		? `min-width:calc(100% + ${10 * (maxDepth * maxDepth - (level > 0 ? 1 : 0))}px)`
 		: `max-width:calc(100% - ${10 * (level > 0 ? 1 : 0)}px)`}"
+	role="button"
+	aria-expanded={expanded}
+	aria-label={`${self?.Header[$contentLanguage]} - Level ${level}`}
 >
 	<!-- ladder dashed vertical -->
 	<div
@@ -276,7 +302,7 @@
 
 	<!-- Drag icon -->
 	{#if level > 0}
-		<iconify-icon icon="mdi:drag" width="18" class="cursor-move" />
+		<iconify-icon icon="mdi:drag" width="18" class="cursor-move" aria-label="Drag handle"></iconify-icon>
 	{/if}
 
 	<!-- Display chevron-down icon for expandable children except the first header -->
@@ -285,6 +311,7 @@
 			icon="mdi:chevron-down"
 			width="30"
 			class="text-tertiary-500 dark:text-primary-500 {expanded === true ? 'rotate-0' : '-rotate-90'}"
+			aria-hidden="true"
 		/>
 	{:else}
 		<!-- TODO: improve indentation -->
@@ -305,13 +332,14 @@
 					$currentChild = self;
 					depth = level + 1;
 					showFields = true;
-					mode.set('create');
+					$mode = 'create';
 					$translationProgress.show = true;
-					shouldShowNextButton.set(true);
+					$shouldShowNextButton = true;
 				}}
 				class="btn-icon dark:text-primary-500"
+				aria-label="Add child item"
 			>
-				<iconify-icon icon="icons8:plus" width="30" class="text-tertiary-500 dark:text-primary-500" />
+				<iconify-icon icon="icons8:plus" width="30" class="text-tertiary-500 dark:text-primary-500" aria-hidden="true"></iconify-icon>
 			</button>
 		{/if}
 
@@ -323,38 +351,44 @@
 				depth = level;
 				showFields = true;
 				$translationProgress.show = true;
-				shouldShowNextButton.set(true);
+				$shouldShowNextButton = true;
 			}}
 			class="btn-icon dark:text-primary-500"
+			aria-label="Edit item"
 		>
-			<iconify-icon icon="raphael:edit" width="28" class="text-tertiary-500 dark:text-primary-500" />
+			<iconify-icon icon="raphael:edit" width="28" class="text-tertiary-500 dark:text-primary-500" aria-hidden="true"></iconify-icon>
 		</button>
 
 		<!-- Delete Button -->
 		{#if level > 0}
 			<button
 				class="btn-icon"
-				on:click|stopPropagation={() => {
-					handleDelete();
-				}}
+				on:click|stopPropagation={handleDelete}
+				aria-label={self.children && self.children.length > 0 ? 'Delete item with children' : 'Delete item'}
 			>
 				{#if self.children && self.children.length > 0}
-					<iconify-icon icon="mdi:alert-octagon" width="30" class="text-warning-500" />
+					<iconify-icon icon="mdi:alert-octagon" width="30" class="text-warning-500" aria-hidden="true"></iconify-icon>
 				{:else}
-					<iconify-icon icon="mdi:trash-can-outline" width="30" class="text-error-500" />
+					<iconify-icon icon="mdi:trash-can-outline" width="30" class="text-error-500" aria-hidden="true"></iconify-icon>
 				{/if}
 			</button>
 		{:else}
 			<div class="btn-icon" />
 		{/if}
 	</div>
-</button>
+</div>
 
 <!-- Categories Children-->
 {#if self?.children?.length > 0 && expanded}
-	<ul bind:this={ul} class="children user-select-none relative overflow-visible" style="margin-left:{10 * (level > 0 ? 1 : 0) + 10}px;">
+	<ul
+		bind:this={ul}
+		class="children user-select-none relative overflow-visible"
+		style="margin-left:{10 * (level > 0 ? 1 : 0) + 10}px;"
+		role="group"
+		aria-label={`Children of ${self?.Header[$contentLanguage]}`}
+	>
 		<!-- dashed ladder horizontal -->
-		<div class="absolute -left-0.5 -top-1 max-h-full border border-dashed border-tertiary-500 content-none dark:border-primary-500" />
+		<div class="absolute -left-0.5 -top-1 max-h-full border border-dashed border-tertiary-500 content-none dark:border-primary-500"></div>
 
 		{#each self.children as child, index}
 			<li use:drag data-children={expanded_list[index] ? child.children?.length : 0} data-index={index} class={`level-${level} touch-none`}>

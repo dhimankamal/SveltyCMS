@@ -4,9 +4,13 @@
 -->
 
 <script lang="ts">
-	export let breadcrumb: string[];
-	export let openFolder: (folderId: string | null) => void;
-	export let folders: { _id: string; name: string; path: string[] }[];
+	interface Props {
+		breadcrumb: string[];
+		openFolder: (folderId: string | null) => void;
+		folders: { _id: string; name: string; path: string[] }[];
+	}
+
+	let { breadcrumb, openFolder, folders }: Props = $props();
 </script>
 
 <ol class="breadcrumb mt-1 flex items-center text-sm text-gray-700 dark:text-gray-300">
@@ -14,7 +18,7 @@
 		<li class="flex items-center">
 			<button
 				class="btn-sm flex items-center text-xs underline"
-				on:click={() => {
+				onclick={() => {
 					if (index === 0) {
 						openFolder(null); // Root folder
 					} else {
@@ -26,10 +30,10 @@
 				}}
 			>
 				{#if index === 0}
-					<iconify-icon icon="mdi:home" width="18" class="text-tertiary-500 dark:text-primary-500" />
+					<iconify-icon icon="mdi:home" width="18" class="text-tertiary-500 dark:text-primary-500"></iconify-icon>
 					<span class="ml-1">{crumb}</span>
 				{:else}
-					<iconify-icon icon="mdi:folder" width="18" class="text-tertiary-500 dark:text-primary-500" />
+					<iconify-icon icon="mdi:folder" width="18" class="text-tertiary-500 dark:text-primary-500"></iconify-icon>
 					<span class="ml-1">{crumb}</span>
 				{/if}
 			</button>

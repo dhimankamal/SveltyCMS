@@ -12,14 +12,19 @@
 
 	// ParaglideJS
 	import * as m from '@src/paraglide/messages';
+
+	// Stores
 	import { systemLanguage } from '@stores/store';
-
-	export let username: string = '';
-
-	export let hostLink = dev ? publicEnv.HOST_DEV : publicEnv.HOST_PROD;
 
 	// Svelty-email
 	import { Button, Container, Head, Hr, Html, Img, Link, Preview, Section, Text } from 'svelty-email';
+
+	interface Props {
+		username?: string;
+		hostLink?: any;
+	}
+
+	let { username = '', hostLink = dev ? publicEnv.HOST_DEV : publicEnv.HOST_PROD }: Props = $props();
 
 	const fontFamily = '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif';
 

@@ -8,13 +8,17 @@
 	import { createEventDispatcher, onMount } from 'svelte';
 	import Konva from 'konva';
 
-	export let stage: Konva.Stage;
-	export let layer: Konva.Layer;
-	export let imageNode: Konva.Image;
+	interface Props {
+		stage: Konva.Stage;
+		layer: Konva.Layer;
+		imageNode: Konva.Image;
+	}
+
+	let { stage, layer, imageNode }: Props = $props();
 
 	const dispatch = createEventDispatcher();
 
-	let rotationAngle = 0;
+	let rotationAngle = $state(0);
 	let gridLayer: Konva.Layer;
 
 	onMount(() => {
@@ -115,8 +119,8 @@
 
 <div class="wrapper">
 	<div class="flex items-center justify-around">
-		<button on:click={rotateLeft} class="btn flex flex-col items-center" aria-label="Rotate Left">
-			<iconify-icon icon="mdi:rotate-left" width="24" />
+		<button onclick={rotateLeft} class="btn flex flex-col items-center" aria-label="Rotate Left">
+			<iconify-icon icon="mdi:rotate-left" width="24"></iconify-icon>
 			<span class="text-xs text-tertiary-500 dark:text-primary-500">Left</span>
 		</button>
 
@@ -125,8 +129,8 @@
 			<span class="ml-2 text-tertiary-500 dark:text-primary-500">{rotationAngle}°</span>
 		</label>
 
-		<button on:click={rotateRight} class=" btn flex flex-col items-center" aria-label="Rotate Right">
-			<iconify-icon icon="mdi:rotate-right" width="24" />
+		<button onclick={rotateRight} class=" btn flex flex-col items-center" aria-label="Rotate Right">
+			<iconify-icon icon="mdi:rotate-right" width="24"></iconify-icon>
 			<span class="text-xs text-tertiary-500 dark:text-primary-500">Right</span>
 		</button>
 	</div>
@@ -139,14 +143,14 @@
 			max="180"
 			step="1"
 			bind:value={rotationAngle}
-			on:input={rotateCustom}
+			oninput={rotateCustom}
 			class="h-2 w-full cursor-pointer rounded-full bg-gray-300"
 		/>
 	</div>
 
 	<div class="mt-4 flex justify-around gap-4">
-		<button on:click={cancelRotation} class="variant-filled-error btn">Cancel</button>
-		<button on:click={resetRotation} class="variant-outline btn">Reset</button>
-		<button on:click={applyRotation} class="variant-filled-primary btn">Apply</button>
+		<button onclick={cancelRotation} class="variant-filled-error btn">Cancel</button>
+		<button onclick={resetRotation} class="variant-outline btn">Reset</button>
+		<button onclick={applyRotation} class="variant-filled-primary btn">Apply</button>
 	</div>
 </div>

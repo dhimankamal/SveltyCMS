@@ -8,7 +8,11 @@
 	import * as m from '@src/paraglide/messages';
 
 	// The boolean value to display
-	export let value: boolean;
+	interface Props {
+		value: boolean;
+	}
+
+	let { value }: Props = $props();
 </script>
 
 <!-- Display 'Yes' for true and 'No' for false with badges -->

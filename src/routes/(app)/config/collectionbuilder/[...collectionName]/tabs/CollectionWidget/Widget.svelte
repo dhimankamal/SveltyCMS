@@ -3,6 +3,8 @@
 @description  The Widget component is used to display the widget form. It is used in the CollectionWidget component.
 -->
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { getGuiFields } from '@utils/utils';
 
 	// Stores
@@ -33,12 +35,12 @@
 	const collectionName = $page.params.collectionName;
 
 	//fields
-	let fields = $collectionValue.fields.map((field, index) => {
+	let fields = $state($collectionValue.fields.map((field, index) => {
 		return {
 			id: index + 1, // Add the id property first
 			...field // Copy all existing properties
 		};
-	});
+	}));
 
 	// Collection headers
 	const headers = ['Id', 'Icon', 'Name', 'DBName', 'Widget'];
@@ -143,14 +145,14 @@
 		dispatch('save');
 	}
 
-	$: {
+	run(() => {
 		fields = $collectionValue.fields.map((field, index) => {
 			return {
 				id: index + 1, // Add the id property first
 				...field // Copy all existing properties
 			};
 		});
-	}
+	});
 </script>
 
 <div class="flex flex-col">
@@ -170,13 +172,13 @@
 						{field.id}
 					</div>
 
-					<iconify-icon icon={field.icon} width="24" class="text-tertiary-500" />
+					<iconify-icon icon={field.icon} width="24" class="text-tertiary-500"></iconify-icon>
 					<div class="font-bold dark:text-primary-500">{field.label}</div>
 					<div class=" ">{field?.db_fieldName ? field.db_fieldName : '-'}</div>
 					<div class=" ">{field.widget?.key}</div>
 
-					<button type="button" class="variant-ghost-primary btn-icon ml-auto" on:click={() => modalWidgetForm(field)}>
-						<iconify-icon icon="ic:baseline-edit" width="24" class="dark:text-white" />
+					<button type="button" class="variant-ghost-primary btn-icon ml-auto" onclick={() => modalWidgetForm(field)}>
+						<iconify-icon icon="ic:baseline-edit" width="24" class="dark:text-white"></iconify-icon>
 					</button>
 				</div>
 			{/each}
@@ -184,13 +186,13 @@
 	</div>
 	<div>
 		<div class="mt-2 flex items-center justify-center gap-3">
-			<button on:click={modalSelectWidget} class="variant-filled-tertiary btn">{m.collection_widgetfield_addFields()} </button>
+			<button onclick={modalSelectWidget} class="variant-filled-tertiary btn">{m.collection_widgetfield_addFields()} </button>
 		</div>
 		<div class=" flex items-center justify-between">
-			<button type="button" on:click={() => ($tabSet = 1)} class="variant-filled-secondary btn mt-2 justify-end">{m.button_previous()}</button>
+			<button type="button" onclick={() => ($tabSet = 1)} class="variant-filled-secondary btn mt-2 justify-end">{m.button_previous()}</button>
 			<button
 				type="button"
-				on:click={handleCollectionSave}
+				onclick={handleCollectionSave}
 				class="variant-filled-tertiary btn mt-2 justify-end dark:variant-filled-primary dark:text-black">{m.button_save()}</button
 			>
 		</div>

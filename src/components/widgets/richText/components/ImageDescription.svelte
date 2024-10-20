@@ -1,32 +1,42 @@
 <script>
+	import { run } from 'svelte/legacy';
+
 	import { createEventDispatcher } from 'svelte';
 
-	export let show = false;
-	export let value = '';
-	export let key = '';
-	export let active = '';
+	/** @type {{show?: boolean, value?: string, key?: string, active?: string}} */
+	let {
+		show = false,
+		value = '',
+		key = '',
+		active = $bindable('')
+	} = $props();
 
-	$: _value = value;
-	$: key != active && (show_input = false);
+	let _value;
+	run(() => {
+		_value = value;
+	});
+	run(() => {
+		key != active && (show_input = false);
+	});
 
-	let show_input = false;
-	$: {
+	let show_input = $state(false);
+	run(() => {
 		show_input = false;
 		show;
-	}
+	});
 
 	const ev = createEventDispatcher();
 </script>
 
 <div class:hidden={!show}>
 	<button
-		on:click={() => {
+		onclick={() => {
 			show_input = !show_input;
 			active = key;
 		}}
 		class="flex items-center"
 	>
-		<iconify-icon icon="material-symbols:description" width="20" />
+		<iconify-icon icon="material-symbols:description" width="20"></iconify-icon>
 		description
 	</button>
 	{#if show_input}
@@ -34,7 +44,7 @@
 			<input
 				type="text"
 				bind:value={_value}
-				on:keydown={(e) => {
+				onkeydown={(e) => {
 					if (e.key == 'Enter') {
 						show_input = false;
 						ev('submit', _value);

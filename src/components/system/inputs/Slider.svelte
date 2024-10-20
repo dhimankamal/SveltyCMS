@@ -1,7 +1,11 @@
 <script lang="ts">
 	import { RangeSlider } from '@skeletonlabs/skeleton';
 
-	export let value;
+	interface Props {
+		value: any;
+	}
+
+	let { value = $bindable() }: Props = $props();
 </script>
 
 <label class="label" for="range-slider">

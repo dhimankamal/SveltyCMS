@@ -12,6 +12,8 @@ Key features:
 -->
 
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	// Your selected Skeleton theme:
 	import '../../app.postcss';
 
@@ -52,13 +54,20 @@ Key features:
 	storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow });
 	initializeStores();
 
-	export let data: any;
+	interface Props {
+		data: any;
+		children?: import('svelte').Snippet;
+	}
 
-	$: contentLanguage.set(data.language);
+	let { data, children }: Props = $props();
 
-	let isCollectionsLoaded = false;
-	let isNonCriticalDataLoaded = false;
-	let loadError: Error | null = null;
+	run(() => {
+		contentLanguage.set(data.language);
+	});
+
+	let isCollectionsLoaded = $state(false);
+	let isNonCriticalDataLoaded = $state(false);
+	let loadError: Error | null = $state(null);
 
 	// Function to load critical data (collections)
 	async function initializeCollections() {
@@ -90,7 +99,9 @@ Key features:
 	}
 
 	// Subscribe to changes in the collection store
-	$: handleCollectionChange($collection);
+	run(() => {
+		handleCollectionChange($collection);
+	});
 
 	// Subscribe to Setup System language
 	systemLanguage.subscribe((lang) => {
@@ -146,9 +157,11 @@ Key features:
 		};
 	});
 
-	$: if ($collections && Object.keys($collections).length > 0) {
-		isCollectionsLoaded = true;
-	}
+	run(() => {
+		if ($collections && Object.keys($collections).length > 0) {
+			isCollectionsLoaded = true;
+		}
+	});
 
 	let selectedTheme: string = 'src/themes/SveltyCMS/SveltyCMSTheme.css'; // Default theme path
 
@@ -197,7 +210,7 @@ Key features:
 {:else}
 	<!-- hack as root +layout cannot be overwritten ? -->
 	{#if $page.url.pathname === '/login'}
-		<slot />
+		{@render children?.()}
 	{:else}
 		<!-- Body -->
 		<div class="flex h-lvh flex-col">
@@ -228,9 +241,9 @@ Key features:
 					{/if}
 					<!-- Router Slot -->
 
-					<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
+					<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 					<div
-						on:keydown={onKeyDown}
+						onkeydown={onKeyDown}
 						role="main"
 						class="relative flex-grow overflow-auto h-full {$sidebarState.left === 'full' ? 'mx-2' : 'mx-1'} {$screenSize === 'lg' ? 'mb-2' : 'mb-16'}"
 					>
@@ -252,7 +265,7 @@ Key features:
 									<Loading />
 								</div>
 							{:else}
-								<slot />
+								{@render children?.()}
 
 								<!--<div>mode : {$mode}</div>							
 								<div>screenSize : {$screenSize}</div>

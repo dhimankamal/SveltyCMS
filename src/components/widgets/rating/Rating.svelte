@@ -17,22 +17,35 @@
 	// zod validation
 	import * as z from 'zod';
 
-	export let field: FieldType;
 
-	export let maxRating = 5;
-	export let color = 'warning-500';
-	export let size = 25;
-	export let iconEmpty = 'material-symbols:star-outline';
-	export let iconHalf = 'material-symbols:star-half';
-	export let iconFull = 'material-symbols:star';
 
 	const fieldName = getFieldName(field);
-	export let value = $collectionValue[fieldName] || {};
+	interface Props {
+		field: FieldType;
+		maxRating?: number;
+		color?: string;
+		size?: number;
+		iconEmpty?: string;
+		iconHalf?: string;
+		iconFull?: string;
+		value?: any;
+	}
+
+	let {
+		field,
+		maxRating = 5,
+		color = 'warning-500',
+		size = 25,
+		iconEmpty = 'material-symbols:star-outline',
+		iconHalf = 'material-symbols:star-half',
+		iconFull = 'material-symbols:star',
+		value = $collectionValue[fieldName] || {}
+	}: Props = $props();
 
 	// Initialize _data based on mode
-	const _data = $mode === 'create' ? {} : value;
+	const _data = $state($mode === 'create' ? {} : value);
 
-	let validationError: string | null = null;
+	let validationError: string | null = $state(null);
 	let debounceTimeout: number | undefined;
 
 	// Define the validation schema for the rating widget
@@ -88,9 +101,15 @@
 	aria-invalid={!!validationError}
 	aria-describedby={validationError ? `${fieldName}-error` : undefined}
 >
-	<svelte:fragment slot="empty"><iconify-icon icon={iconEmpty} width={size} {color}></iconify-icon></svelte:fragment>
-	<svelte:fragment slot="half"><iconify-icon icon={iconHalf} width={size} {color}></iconify-icon></svelte:fragment>
-	<svelte:fragment slot="full"><iconify-icon icon={iconFull} width={size} {color}></iconify-icon></svelte:fragment>
+	{#snippet empty()}
+		<iconify-icon icon={iconEmpty} width={size} {color}></iconify-icon>
+	{/snippet}
+	{#snippet half()}
+		<iconify-icon icon={iconHalf} width={size} {color}></iconify-icon>
+	{/snippet}
+	{#snippet full()}
+		<iconify-icon icon={iconFull} width={size} {color}></iconify-icon>
+	{/snippet}
 </Ratings>
 
 <!-- Error Message -->

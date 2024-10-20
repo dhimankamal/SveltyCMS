@@ -4,6 +4,8 @@
 -->
 
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { goto } from '$app/navigation';
 
 	// Stores
@@ -70,30 +72,36 @@
 	}
 
 	// Define the structure of an unassigned collection
-	$: UnassignedCollections = $unAssigned.map((collection) => ({
-		id: crypto.randomUUID(),
-		name: collection.name,
-		icon: collection.icon,
-		items: $unAssigned.map((collection: any) => ({
+	let UnassignedCollections;
+	run(() => {
+		UnassignedCollections = $unAssigned.map((collection) => ({
 			id: crypto.randomUUID(),
 			name: collection.name,
 			icon: collection.icon,
-			collections: collection
-		}))
-	}));
+			items: $unAssigned.map((collection: any) => ({
+				id: crypto.randomUUID(),
+				name: collection.name,
+				icon: collection.icon,
+				collections: collection
+			}))
+		}));
+	});
 
 	// Define the structure of an Assigned collection
-	$: availableCollection = $categories.map((category) => ({
-		id: crypto.randomUUID(),
-		name: category.name,
-		icon: category.icon,
-		items: category.collections.map((collection: any) => ({
+	let availableCollection;
+	run(() => {
+		availableCollection = $categories.map((category) => ({
 			id: crypto.randomUUID(),
-			name: collection.name,
-			icon: collection.icon,
-			collections: collection
-		}))
-	}));
+			name: category.name,
+			icon: category.icon,
+			items: category.collections.map((collection: any) => ({
+				id: crypto.randomUUID(),
+				name: collection.name,
+				icon: collection.icon,
+				collections: collection
+			}))
+		}));
+	});
 
 	// Update the Assigned collection(s) where the item was dropped
 	function handleBoardUpdated(newColumnsData: any) {
@@ -151,23 +159,23 @@
 
 <div class="my-2 flex w-full justify-around gap-2 lg:ml-auto lg:mt-0 lg:w-auto lg:flex-row">
 	<!-- add new Category-->
-	<button on:click={modalAddCategory} type="button" class="variant-filled-tertiary btn-sm flex items-center justify-between gap-1 rounded font-bold">
-		<iconify-icon icon="bi:collection" width="18" class="text-white" />
+	<button onclick={modalAddCategory} type="button" class="variant-filled-tertiary btn-sm flex items-center justify-between gap-1 rounded font-bold">
+		<iconify-icon icon="bi:collection" width="18" class="text-white"></iconify-icon>
 		{m.collection_addcategory()}
 	</button>
 
 	<!-- add new Collection-->
 	<button
-		on:click={handleAddCollectionClick}
+		onclick={handleAddCollectionClick}
 		type="button"
 		class="variant-filled-success btn-sm flex items-center justify-between gap-1 rounded font-bold"
 	>
-		<iconify-icon icon="material-symbols:category" width="18" class="text-white" />
+		<iconify-icon icon="material-symbols:category" width="18" class="text-white"></iconify-icon>
 		{m.collection_addcollection()}
 	</button>
 
-	<button type="button" on:click={handleSaveClick} class="variant-filled-tertiary btn gap-2 !text-white dark:variant-filled-primary lg:ml-4">
-		<iconify-icon icon="material-symbols:save" width="24" class="text-white" />
+	<button type="button" onclick={handleSaveClick} class="variant-filled-tertiary btn gap-2 !text-white dark:variant-filled-primary lg:ml-4">
+		<iconify-icon icon="material-symbols:save" width="24" class="text-white"></iconify-icon>
 		{m.button_save()}
 	</button>
 </div>

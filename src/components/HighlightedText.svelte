@@ -4,8 +4,12 @@
 -->
 
 <script lang="ts">
-	export let text = '';
-	export let term = '';
+	interface Props {
+		text?: string;
+		term?: string;
+	}
+
+	let { text = '', term = '' }: Props = $props();
 
 	function highlight(text: string, term: string): string {
 		if (!term) {

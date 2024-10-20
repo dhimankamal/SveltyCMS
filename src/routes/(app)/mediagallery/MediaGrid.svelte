@@ -7,17 +7,13 @@ Key features:
 - Thumbnail preview for images
 - Actions for file info, edit, and delete
 - Uses formatBytes for human-readable file sizes
-- Implements constructMediaUrl for proper URL handling
+- Implements getMediaUrl for proper URL handling
 -->
 
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-
-	// Utils
 	import { formatBytes } from '@utils/utils';
 	import { getMediaUrl } from '@utils/media/mediaUtils';
-
-	// Skeleton
 	import { popup, type PopupSettings } from '@skeletonlabs/skeleton';
 
 	export let filteredFiles;
@@ -25,10 +21,8 @@ Key features:
 
 	const dispatch = createEventDispatcher();
 
-	// Initialize the showInfo array with false values
 	const showInfo = Array.from({ length: filteredFiles.length }, () => false);
 
-	// Popup Tooltips
 	const FileTooltip: PopupSettings = {
 		event: 'click',
 		target: 'FileInfo',
@@ -92,7 +86,6 @@ Key features:
 									{/if}
 								{/each}
 							</tbody>
-							<div class="variant-filled arrow" />
 						</table>
 					</div>
 					<button class="btn-icon">

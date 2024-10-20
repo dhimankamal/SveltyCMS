@@ -4,6 +4,9 @@
  -->
 
 <script lang="ts">
+	import { run, createBubbler } from 'svelte/legacy';
+
+	const bubble = createBubbler();
 	import { getFieldName, saveFormData } from '@utils/utils';
 
 	// Components
@@ -54,28 +57,28 @@
 	const user: User = $page.data.user;
 
 	let previousLanguage = get(contentLanguage);
-	let previousTabSet = get(tabSet);
-	let tempData = {};
+	let previousTabSet = $state(get(tabSet));
+	let tempData = $state({});
 
 	//ParaglideJS
 	import * as m from '@src/paraglide/messages';
 	import { logger } from '@src/utils/logger';
 
-	$: {
+	run(() => {
 		if ($tabSet !== previousTabSet) {
 			tempData[previousLanguage] = get(collectionValue);
 			previousTabSet = $tabSet;
 		}
-	}
+	});
 
-	$: {
+	run(() => {
 		if ($mode === 'view') {
 			tempData = {};
 		}
 		if ($mode === 'edit' && $collectionValue.status === 'PUBLISHED') {
 			$modifyEntry('unpublish');
 		}
-	}
+	});
 
 	// Type guard to check if the widget has a validateWidget method
 	function hasValidateWidget(widget: any): widget is { validateWidget: () => Promise<string | null> } {
@@ -132,12 +135,18 @@
 		mode.set('edit');
 	}
 
-	export let showMore = false;
-	$: if ($mode === 'edit' || $mode === 'create') {
-		showMore = false;
+	interface Props {
+		showMore?: boolean;
 	}
 
-	let next = () => {};
+	let { showMore = $bindable(false) }: Props = $props();
+	run(() => {
+		if ($mode === 'edit' || $mode === 'create') {
+			showMore = false;
+		}
+	});
+
+	let next = $state(() => {});
 	saveLayerStore.subscribe((value) => {
 		next = value;
 		shouldShowNextButton.set(false);
@@ -154,11 +163,11 @@
 		{#if $sidebarState.left === 'hidden'}
 			<button
 				type="button"
-				on:keydown
-				on:click={() => toggleSidebar('left', get(screenSize) === 'lg' ? 'full' : 'collapsed')}
+				onkeydown={bubble('keydown')}
+				onclick={() => toggleSidebar('left', get(screenSize) === 'lg' ? 'full' : 'collapsed')}
 				class="variant-ghost-surface btn-icon mt-1"
 			>
-				<iconify-icon icon="mingcute:menu-fill" width="24" />
+				<iconify-icon icon="mingcute:menu-fill" width="24"></iconify-icon>
 			</button>
 		{/if}
 
@@ -166,7 +175,7 @@
 		<div class="flex {!$sidebarState.left ? 'ml-2' : 'ml-1'}">
 			{#if $collection && $collection.icon}
 				<div class="flex items-center justify-center">
-					<iconify-icon icon={$collection.icon} width="24" class="text-error-500" />
+					<iconify-icon icon={$collection.icon} width="24" class="text-error-500"></iconify-icon>
 				</div>
 			{/if}
 
@@ -189,8 +198,8 @@
 		{#if $screenSize !== 'lg'}
 			{#if $shouldShowNextButton}
 				<!-- Next Button  -->
-				<button type="button" on:click={next} class="variant-filled-tertiary btn-icon dark:variant-filled-primary md:btn">
-					<iconify-icon icon="carbon:next-filled" width="24" class="text-white" />
+				<button type="button" onclick={next} class="variant-filled-tertiary btn-icon dark:variant-filled-primary md:btn">
+					<iconify-icon icon="carbon:next-filled" width="24" class="text-white"></iconify-icon>
 					<span class="hidden md:block">{m.button_next()}</span>
 				</button>
 			{:else}
@@ -200,13 +209,13 @@
 				</div>
 
 				<!-- Save Content -->
-				<button type="button" on:click={saveData} class="variant-filled-tertiary btn-icon dark:variant-filled-primary md:hidden">
-					<iconify-icon icon="material-symbols:save" width="24" class="text-white" />
+				<button type="button" onclick={saveData} class="variant-filled-tertiary btn-icon dark:variant-filled-primary md:hidden">
+					<iconify-icon icon="material-symbols:save" width="24" class="text-white"></iconify-icon>
 				</button>
 
 				<!-- DropDown to show more Buttons -->
-				<button type="button" on:keydown on:click={() => (showMore = !showMore)} class="variant-ghost-surface btn-icon">
-					<iconify-icon icon="material-symbols:filter-list-rounded" width="30" />
+				<button type="button" onkeydown={bubble('keydown')} onclick={() => (showMore = !showMore)} class="variant-ghost-surface btn-icon">
+					<iconify-icon icon="material-symbols:filter-list-rounded" width="30"></iconify-icon>
 				</button>
 			{/if}
 		{:else}
@@ -219,12 +228,12 @@
 		<!-- TODO: fix button icon switch -->
 		<!-- Cancel/Reload -->
 		{#if $headerActionButton}
-			<button type="button" on:click={handleCancel} class="variant-ghost-surface btn-icon">
-				<iconify-icon icon="material-symbols:close" width="24" />
+			<button type="button" onclick={handleCancel} class="variant-ghost-surface btn-icon">
+				<iconify-icon icon="material-symbols:close" width="24"></iconify-icon>
 			</button>
 		{:else}
-			<button type="button" on:click={handleReload} class="variant-ghost-surface btn-icon">
-				<iconify-icon icon="fa:refresh" width="24" class="text-tertiary-500 dark:text-primary-500" />
+			<button type="button" onclick={handleReload} class="variant-ghost-surface btn-icon">
+				<iconify-icon icon="fa:refresh" width="24" class="text-tertiary-500 dark:text-primary-500"></iconify-icon>
 			</button>
 		{/if}
 	</div>
@@ -235,8 +244,8 @@
 		<div class="flex flex-col items-center justify-center">
 			<!-- Delete Content -->
 			<!-- disabled={!$collection?.permissions?.[userRole]?.delete} -->
-			<button type="button" on:click={() => $modifyEntry('delete')} class="gradient-error gradient-error-hover gradient-error-focus btn-icon">
-				<iconify-icon icon="icomoon-free:bin" width="24" />
+			<button type="button" onclick={() => $modifyEntry('delete')} class="gradient-error gradient-error-hover gradient-error-focus btn-icon">
+				<iconify-icon icon="icomoon-free:bin" width="24"></iconify-icon>
 			</button>
 		</div>
 
@@ -246,33 +255,33 @@
 				<div class="flex flex-col items-center justify-center">
 					<button
 						type="button"
-						on:click={() => $modifyEntry('publish')}
+						onclick={() => $modifyEntry('publish')}
 						disabled={!($collection?.permissions?.[user.role]?.write && $collection?.permissions?.[user.role]?.create)}
 						class="gradient-tertiary gradient-tertiary-hover gradient-tertiary-focus btn-icon"
 					>
-						<iconify-icon icon="bi:hand-thumbs-up-fill" width="24" />
+						<iconify-icon icon="bi:hand-thumbs-up-fill" width="24"></iconify-icon>
 					</button>
 				</div>
 
 				<div class="flex flex-col items-center justify-center">
 					<button
 						type="button"
-						on:click={openScheduleModal}
+						onclick={openScheduleModal}
 						disabled={!$collection?.permissions?.[user.role]?.write}
 						class="gradient-pink gradient-pink-hover gradient-pink-focus btn-icon"
 					>
-						<iconify-icon icon="bi:clock" width="24" />
+						<iconify-icon icon="bi:clock" width="24"></iconify-icon>
 					</button>
 				</div>
 			{:else}
 				<div class="flex flex-col items-center justify-center">
 					<button
 						type="button"
-						on:click={() => $modifyEntry('unpublish')}
+						onclick={() => $modifyEntry('unpublish')}
 						disabled={!$collection?.permissions?.[user.role]?.write}
 						class="gradient-yellow gradient-yellow-hover gradient-yellow-focus btn-icon"
 					>
-						<iconify-icon icon="bi:pause-circle" width="24" />
+						<iconify-icon icon="bi:pause-circle" width="24"></iconify-icon>
 					</button>
 				</div>
 			{/if}
@@ -280,22 +289,22 @@
 			<div class="flex flex-col items-center justify-center">
 				<button
 					type="button"
-					on:click={() => $modifyEntry('schedule')}
+					onclick={() => $modifyEntry('schedule')}
 					disabled={!$collection?.permissions?.[user.role]?.write}
 					class="gradient-pink gradient-pink-hover gradient-pink-focus btn-icon"
 				>
-					<iconify-icon icon="bi:clock" width="24" />
+					<iconify-icon icon="bi:clock" width="24"></iconify-icon>
 				</button>
 			</div>
 
 			<div class="flex flex-col items-center justify-center">
 				<button
 					type="button"
-					on:click={() => $modifyEntry('clone')}
+					onclick={() => $modifyEntry('clone')}
 					disabled={!($collection?.permissions?.[user.role]?.write && $collection?.permissions?.[user.role]?.create)}
 					class="gradient-secondary gradient-secondary-hover gradient-secondary-focus btn-icon"
 				>
-					<iconify-icon icon="bi:clipboard-data-fill" width="24" />
+					<iconify-icon icon="bi:clipboard-data-fill" width="24"></iconify-icon>
 				</button>
 			</div>
 		{/if}

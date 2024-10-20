@@ -11,9 +11,9 @@
 
 	// Components
 	import Loading from '@components/Loading.svelte';
+
 	// Skeleton
 	import { getToastStore } from '@skeletonlabs/skeleton';
-
 	const dispatch = createEventDispatcher();
 	const toastStore = getToastStore();
 
@@ -26,10 +26,10 @@
 
 	export const permissions: Record<string, Partial<Record<PermissionAction, boolean>>> = {};
 
-	let rolesArray: RoleWithPermissions[] = [];
+	let rolesArray: RoleWithPermissions[] = $state([]);
 	let allRoles: string[] = [];
-	let isLoading = true;
-	let searchQuery = '';
+	let isLoading = $state(true);
+	let searchQuery = $state('');
 
 	onMount(async () => {
 		try {
@@ -115,7 +115,7 @@
 	}
 
 	// Filter roles based on search query
-	$: filteredRolesArray = rolesArray.filter((role) => role.name.toLowerCase().includes(searchQuery.toLowerCase()));
+	let filteredRolesArray = $derived(rolesArray.filter((role) => role.name.toLowerCase().includes(searchQuery.toLowerCase())));
 </script>
 
 {#if isLoading}
@@ -124,7 +124,7 @@
 	<div>
 		<h2>Manage Permissions</h2>
 		<input bind:value={searchQuery} placeholder="Search roles..." class="input" />
-		<button on:click={addRole} class="variant-filled-primary btn">Add Role</button>
+		<button onclick={addRole} class="variant-filled-primary btn">Add Role</button>
 
 		<table class="table">
 			<thead>
@@ -142,11 +142,12 @@
 						{#each Object.values(PermissionAction) as permission}
 							<td>
 								<button
-									on:click={() => togglePermission(role.name, permission)}
+									onclick={() => togglePermission(role.name, permission)}
 									class={`btn ${role.permissions[permission] ? 'variant-filled-success' : 'variant-filled-error'}`}
 									disabled={role.isAdmin}
+									aria-label={role.permissions[permission] ? 'Disable' : 'Enable'}
 								>
-									<iconify-icon icon={icon[permission]} />
+									<iconify-icon icon={icon[permission]}></iconify-icon>
 								</button>
 							</td>
 						{/each}

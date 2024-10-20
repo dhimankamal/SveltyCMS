@@ -3,12 +3,23 @@
 
 	const dispatch = createEventDispatcher();
 
-	export let value: boolean;
-	export let label: string = '';
-	export let icon: any = null;
-	export let labelColor: string = 'text-primary-500'; // Default label color
-	export let iconOn: string = 'wpf:invisible'; // Default icon when toggle is on
-	export let iconOff: string = 'gridicons:not-visible'; // Default icon when toggle is off
+	interface Props {
+		value: boolean;
+		label?: string;
+		icon?: any;
+		labelColor?: string;
+		iconOn?: string;
+		iconOff?: string;
+	}
+
+	let {
+		value = $bindable(),
+		label = '',
+		icon = null,
+		labelColor = 'text-primary-500',
+		iconOn = 'wpf:invisible',
+		iconOff = 'gridicons:not-visible'
+	}: Props = $props();
 
 	const random = crypto.randomUUID();
 
@@ -25,7 +36,7 @@
 	</span>
 
 	<div class="relative">
-		<input name={label} type="checkbox" id="toggleSwitch{random}" checked={value} class="peer sr-only" on:click={updateToggle} />
+		<input name={label} type="checkbox" id="toggleSwitch{random}" checked={value} class="peer sr-only" onclick={updateToggle} />
 
 		<!-- Background -->
 		<div class="block h-8 w-14 rounded-full bg-surface-400 peer-checked:bg-primary-500">
@@ -39,9 +50,9 @@
 			class="absolute left-1 top-1 flex h-6 w-6 items-center justify-end rounded-full bg-error-500 transition peer-checked:translate-x-6 peer-checked:bg-primary-900"
 		>
 			{#if value}
-				<iconify-icon icon={iconOn} width="24" />
+				<iconify-icon icon={iconOn} width="24"></iconify-icon>
 			{:else}
-				<iconify-icon icon={iconOff} width="24" />
+				<iconify-icon icon={iconOff} width="24"></iconify-icon>
 			{/if}
 		</div>
 	</div>

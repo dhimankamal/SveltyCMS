@@ -1,18 +1,14 @@
-<!-- @file src/routes/login/components/SignUp.svelte
-@description SignUp component. -->
+<!-- 
+@file src/routes/login/components/SignUp.svelte
+@description SignUp component. 
+-->
 
 <script lang="ts">
 	import { privateEnv } from '@root/config/private';
 	import { browser } from '$app/environment';
-
 	import type { PageData } from '../$types';
 	import { createEventDispatcher } from 'svelte';
 	const dispatch = createEventDispatcher();
-
-	// Function to handle the "Back" button click
-	function handleBack() {
-		dispatch('back');
-	}
 
 	// Stores
 	import { page } from '$app/stores';
@@ -34,74 +30,82 @@
 	// ParaglideJS
 	import * as m from '@src/paraglide/messages';
 
-	export let active: undefined | 0 | 1 = undefined;
-	export let FormSchemaSignUp: PageData['signUpForm'];
+	// Props
+	let {
+		active = $bindable() as undefined | 0 | 1,
+		// Superforms
+		FormSchemaSignUp = undefined as PageData['signUpForm'] | undefined
+	} = $props();
 
-	const pageData = $page.data as PageData;
-	let firstUserExists = pageData.firstUserExists;
+	// State
+	let tabIndex = $state(1);
+	let activeOauth = $state(false);
+	let response = $state<any>(undefined);
+	let formElement = $state<HTMLFormElement | null>(null);
+	let showPassword = $state(false);
 
-	let tabIndex = 1;
-	const activeOauth = false;
-	let response: any;
+	// Derived state
+	let pageData = $derived($page.data as PageData);
+	let firstUserExists = $derived(pageData.firstUserExists);
 
 	const { form, constraints, allErrors, errors, enhance, delayed } = superForm<any>(FormSchemaSignUp, {
 		id: 'signup',
 		validators: firstUserExists ? zod(signUpFormSchema) : zod(signUpFormSchema.innerType().omit({ token: true })),
-		// Clear form on success.
-		resetForm: true,
-		// Prevent page invalidation, which would clear the other form when the load function executes again.
-		invalidateAll: false,
+		resetForm: true, // Clear form on success.
+		invalidateAll: false, // Prevent page invalidation, which would clear the other form when the load function executes again.
 		// other options
 		applyAction: true,
 		taintedMessage: '', // prevent multiple submits
 		multipleSubmits: 'prevent', // prevent multiple submits
-
 		onSubmit: ({ cancel }) => {
 			// handle login form submission
-
 			if ($allErrors.length > 0) cancel();
 		},
-
 		onResult: ({ result, cancel }) => {
-			if (result.type == 'redirect') return;
+			if (result.type === 'redirect') return;
 			cancel();
-
 			// add wiggle animation to form element
-			formElement.classList.add('wiggle');
-			setTimeout(() => formElement.classList.remove('wiggle'), 300);
-
-			if (result.type == 'success') {
+			formElement?.classList.add('wiggle');
+			setTimeout(() => formElement?.classList.remove('wiggle'), 300);
+			if (result.type === 'success') {
 				response = result.data?.message;
 			}
 		}
 	});
 
-	const params = browser ? new URL(window.location.href).searchParams : new URLSearchParams('');
+	$effect(() => {
+		if (browser) {
+			const params = new URL(window.location.href).searchParams;
+			if (params.has('regToken')) {
+				active = 1;
+				$form.token = params.get('regToken')!;
+			}
+		}
+	});
 
-	if (params.has('regToken')) {
-		active = 1;
-		$form.token = params.get('regToken')!;
+	// Function to handle the "Back" button click
+	function handleBack(event: Event) {
+		event.stopPropagation();
+		dispatch('back');
 	}
-
-	let formElement: HTMLFormElement;
-	let showPassword = false;
 </script>
 
-<!-- svelte-ignore a11y-no-static-element-interactions -->
 <section
-	on:click
-	on:pointerenter
-	on:keydown
+	onclick={() => console.log('Clicked')}
+	onpointerenter={() => console.log('Pointer entered')}
+	onkeydown={(e) => console.log('Key pressed:', e.key)}
+	role="button"
+	tabindex="0"
 	class="hover relative flex items-center overflow-y-auto"
-	class:active={active == 1}
+	class:active={active === 1}
 	class:inactive={active !== undefined && active !== 1}
-	class:hover={active == undefined || active == 0}
+	class:hover={active === undefined || active === 0}
 >
-	{#if active == 1}
+	{#if active === 1}
 		<!-- CSS Logo -->
 		<div class="hidden xl:block"><SveltyCMSLogoFull /></div>
 
-		<div class="mx-auto mb-[5%] mt-[15%] w-full p-4 lg:w-1/2" class:hide={active != 1}>
+		<div class="mx-auto mb-[5%] mt-[15%] w-full p-4 lg:w-1/2" class:hide={active !== 1}>
 			<div class="mb-4 flex flex-row gap-2">
 				<SveltyCMSLogo className="w-14" fill="red" />
 
@@ -123,13 +127,13 @@
 			<div class="-mt-2 flex items-center justify-end gap-2 text-right text-xs text-error-500">
 				{m.form_required()}
 
-				<button on:click|stopPropagation={handleBack} class="variant-outline-secondary btn-icon">
+				<button onclick={handleBack} class="variant-outline-secondary btn-icon" aria-label="Back">
 					<iconify-icon icon="ri:arrow-left-line" width="20" class="text-white"></iconify-icon>
 				</button>
 			</div>
 
 			<!-- <SuperDebug data={$form} display={dev} /> -->
-			<form method="post" action="?/signUp" use:enhance bind:this={formElement} class="items flex flex-col gap-3" class:hide={active != 1}>
+			<form method="post" action="?/signUp" use:enhance bind:this={formElement} class="items flex flex-col gap-3" class:hide={active !== 1}>
 				<!-- Username field -->
 				<FloatingInput
 					id="usernamesignUp"
@@ -214,7 +218,7 @@
 
 				<PasswordStrength password={$form.confirm_password} />
 
-				{#if firstUserExists == true}
+				{#if firstUserExists}
 					<!-- Registration Token -->
 					<FloatingInput
 						id="tokensignUp"
@@ -242,34 +246,36 @@
 				{/if}
 
 				{#if privateEnv.USE_GOOGLE_OAUTH === false}
-					<!-- Email signin only -->
+					<!-- Email signIn only -->
 					<button type="submit" class="variant-filled btn mt-4 uppercase">
 						{m.form_signup()}
 						{#if $delayed}<img src="/Spinner.svg" alt="Loading.." class="ml-4 h-6" />{/if}
 					</button>
 
-					<!-- Email + Oauth signin  -->
+					<!-- Email + OAuth signIn  -->
 				{:else if privateEnv.USE_GOOGLE_OAUTH === true && !activeOauth}
 					<div class="btn-group mt-4 border border-secondary-500 text-white [&>*+*]:border-secondary-500">
-						<button type="submit" class="btn w-3/4 bg-surface-200 text-black hover:text-white">
+						<button type="submit" class="btn w-3/4 bg-surface-200 text-black hover:text-white" aria-label={m.form_signup()}>
 							<span class="w-full text-black hover:text-white">{m.form_signup()}</span>
 							<!-- Loading indicators -->
 							{#if $delayed}<img src="/Spinner.svg" alt="Loading.." class="ml-4 h-6" />{/if}
 						</button>
 
-						<form method="post" action="?/OAuth" class="w-1/4">
-							<button type="submit" class="btn flex w-full items-center justify-center">
-								<iconify-icon icon="flat-color-icons:google" color="white" width="20" class="mr-0.5 sm:mr-2" />
-								<span class="">OAuth</span>
-							</button>
-						</form>
+						{#if privateEnv.USE_GOOGLE_OAUTH === true && !activeOauth}
+							<form method="post" action="?/OAuth" class="mt-4 border border-secondary-500 text-white [&>*+*]:border-secondary-500">
+								<button type="submit" class="btn flex w-full items-center justify-center" aria-label="OAuth">
+									<iconify-icon icon="flat-color-icons:google" color="white" width="20" class="mr-0.5 sm:mr-2" />
+									<span class="">OAuth</span>
+								</button>
+							</form>
+						{/if}
 					</div>
 				{/if}
 			</form>
 		</div>
 	{/if}
 
-	<SignupIcon show={active == 0 || active == undefined} />
+	<SignupIcon show={active === 0 || active === undefined} />
 </section>
 
 <style lang="postcss">

@@ -4,6 +4,9 @@
 -->
 
 <script lang="ts">
+	import { run, createBubbler } from 'svelte/legacy';
+
+	const bubble = createBubbler();
 	import type { PageData } from '../$types';
 	import { page } from '$app/stores';
 	import { invalidateAll } from '$app/navigation';
@@ -18,8 +21,6 @@
 	// Components
 	import FloatingInput from '@components/system/inputs/floatingInput.svelte';
 
-	export let addUserForm: PageData['addUserForm'];
-	export let parent: any;
 
 	// Skeleton & Stores
 	import { getToastStore, getModalStore } from '@skeletonlabs/skeleton';
@@ -41,6 +42,12 @@
 	import { superForm } from 'sveltekit-superforms/client';
 	import { zod } from 'sveltekit-superforms/adapters';
 	import { addUserTokenSchema } from '@utils/formSchemas';
+	interface Props {
+		addUserForm: PageData['addUserForm'];
+		parent: any;
+	}
+
+	let { addUserForm = $bindable(), parent }: Props = $props();
 
 	const { form, allErrors, errors, enhance } = superForm(addUserForm as Record<string, unknown>, {
 		id: 'addUser',
@@ -74,10 +81,10 @@
 	});
 
 	// Define default role and token validity options
-	let roleSelected: string = roles[1]?._id || ''; // Ensure the correct type
-	let expiresIn = '2 hrs'; // Set the default validity
-	let expiresInLabel = '';
-	let expirationTime: number | undefined;
+	let roleSelected: string = $state(roles[1]?._id || ''); // Ensure the correct type
+	let expiresIn = $state('2 hrs'); // Set the default validity
+	let expiresInLabel = $state('');
+	let expirationTime: number | undefined = $state();
 
 	// Define the validity options and their corresponding seconds
 	const validityOptions = [
@@ -87,11 +94,11 @@
 		{ label: '1 week', value: '1 week', seconds: 7 * 24 * 60 * 60 }
 	];
 
-	$: {
+	run(() => {
 		$form.role = roleSelected;
 		$form.expiresIn = expiresIn;
 		$form.expiresInLabel = expiresInLabel;
-	}
+	});
 
 	// Base Classes
 	const cBase = 'card p-4 w-modal shadow-xl space-y-4 bg-white';
@@ -139,7 +146,7 @@
 								<button
 									type="button"
 									class="chip {roleSelected === r._id ? 'variant-filled-tertiary' : 'variant-ghost-secondary'}"
-									on:click={() => {
+									onclick={() => {
 										roleSelected = r._id;
 										console.log('Selected Role:', roleSelected);
 									}}
@@ -149,7 +156,7 @@
 									aria-pressed={roleSelected === r._id ? 'true' : 'false'}
 								>
 									{#if roleSelected === r._id}
-										<span><iconify-icon icon="fa:check" /></span>
+										<span><iconify-icon icon="fa:check"></iconify-icon></span>
 									{/if}
 									<span class="capitalize">{r.name}</span>
 								</button>
@@ -169,17 +176,17 @@
 						{#each validityOptions as option}
 							<span
 								class="chip {expiresIn === option.value ? 'variant-filled-tertiary' : 'variant-ghost-secondary'}"
-								on:click={() => {
+								onclick={() => {
 									expiresIn = option.value;
 									expirationTime = option.seconds;
 									expiresInLabel = option.label;
 								}}
-								on:keypress
+								onkeypress={bubble('keypress')}
 								role="button"
 								tabindex="0"
 							>
 								{#if expiresIn === option.value}
-									<span><iconify-icon icon="fa:check" /></span>
+									<span><iconify-icon icon="fa:check"></iconify-icon></span>
 								{/if}
 								<span class="capitalize">{option.label}</span>
 							</span>
@@ -195,7 +202,7 @@
 
 			<footer class="flex items-center justify-between {parent.regionFooter}">
 				<!-- Cancel -->
-				<button class="variant-outline-secondary btn" on:click={parent.onClose}>{m.button_cancel()}</button>
+				<button class="variant-outline-secondary btn" onclick={parent.onClose}>{m.button_cancel()}</button>
 				<!-- Send -->
 				<button type="submit" class="variant-filled-tertiary btn dark:variant-filled-primary {parent.buttonPositive}">{m.button_send()}</button>
 			</footer>

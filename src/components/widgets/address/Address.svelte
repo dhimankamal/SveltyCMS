@@ -4,6 +4,8 @@
 -->
 
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import type { FieldType } from '.';
 	import { privateEnv } from '@root/config/private';
 	import { publicEnv } from '@root/config/public';
@@ -33,7 +35,7 @@
 	import { Autocomplete } from '@skeletonlabs/skeleton';
 	import type { AutocompleteOption } from '@skeletonlabs/skeleton';
 
-	let inputPopupDemo = '';
+	let inputPopupDemo = $state('');
 	const popupSettings: PopupSettings = {
 		event: 'focus-click',
 		target: 'popupAutocomplete',
@@ -71,7 +73,7 @@
 		// state: (e: any) => console.log('tooltip', e)
 	};
 
-	let listboxValue: string = 'Germany';
+	let listboxValue: string = $state('Germany');
 
 	// https://stefangabos.github.io/world_countries/
 	import countries from './countries.json';
@@ -80,7 +82,7 @@
 	const selectedCountry = '';
 
 	// Initialize a filtered array of countries that will be displayed in the dropdown menu
-	let filteredCountries = countries;
+	let filteredCountries = $state(countries);
 
 	function searchCountry(event: any) {
 		// Get the search query from the input field
@@ -91,49 +93,16 @@
 		);
 	}
 
-	export let field: any = undefined;
-	export let value = {
-		latitude: null,
-		longitude: null,
-		name: '',
-		street: '',
-		zip: '',
-		city: '',
-		country: ''
-	};
 
-	$: if (!value) {
-		value = {
-			latitude: null,
-			longitude: null,
-			name: '',
-			street: '',
-			zip: '',
-			city: '',
-			country: ''
-		};
-	}
 
-	export let widgetValue;
 
 	const _data = $mode == 'create' ? {} : value;
 
-	$: _language = field?.translated ? $contentLanguage : publicEnv.DEFAULT_CONTENT_LANGUAGE;
-	$: updateTranslationProgress(_data, field);
 
-	let validationError: string | null = null;
+	let validationError: string | null = $state(null);
 
 	export const WidgetData = async () => _data;
 
-	$: widgetValue = {
-		latitude: value.latitude,
-		longitude: value.longitude,
-		name: value.name,
-		street: value.street,
-		zip: value.zip,
-		city: value.city,
-		country: value.country
-	};
 
 	const language = new MapboxLanguage();
 
@@ -213,6 +182,21 @@
 
 	// zod validation
 	import * as z from 'zod';
+	interface Props {
+		field?: any;
+		value?: any;
+		widgetValue: any;
+	}
+
+	let { field = undefined, value = $bindable({
+		latitude: null,
+		longitude: null,
+		name: '',
+		street: '',
+		zip: '',
+		city: '',
+		country: ''
+	}), widgetValue = $bindable() }: Props = $props();
 
 	// Customize the error messages for each rule
 	const validateSchema = z.object({
@@ -235,13 +219,41 @@
 			}
 		}
 	}
+	run(() => {
+		if (!value) {
+			value = {
+				latitude: null,
+				longitude: null,
+				name: '',
+				street: '',
+				zip: '',
+				city: '',
+				country: ''
+			};
+		}
+	});
+	let _language = $derived(field?.translated ? $contentLanguage : publicEnv.DEFAULT_CONTENT_LANGUAGE);
+	run(() => {
+		updateTranslationProgress(_data, field);
+	});
+	run(() => {
+		widgetValue = {
+			latitude: value.latitude,
+			longitude: value.longitude,
+			name: value.name,
+			street: value.street,
+			zip: value.zip,
+			city: value.city,
+			country: value.country
+		};
+	});
 </script>
 
 {#if privateEnv.MAPBOX_API_TOKEN}
 	<address class="w-full">
 		<div class="mb-1 flex justify-between gap-2">
 			<button class="variant-filled-primary btn btn-base rounded-md text-white" aria-label={m.widget_address_getfromaddress()}>
-				<iconify-icon icon="bi:map" width="16" class="mr-2" />
+				<iconify-icon icon="bi:map" width="16" class="mr-2"></iconify-icon>
 				{m.widget_address_getfromaddress()}
 			</button>
 		</div>
@@ -332,7 +344,7 @@
 			<div>
 				<button class="input btn mt-2 w-full justify-between" use:popup={CountryCombobox}>
 					<span class="capitalize">{listboxValue ?? 'Combobox'}</span>
-					<i class="fa-solid fa-caret-down opacity-50" />
+					<i class="fa-solid fa-caret-down opacity-50"></i>
 				</button>
 				<div class="card overflow-hidden shadow-xl" data-popup="CountryCombobox">
 					<Autocomplete on:keyup={searchCountry}>
@@ -349,7 +361,7 @@
 									value.country = country.alpha2;
 								}}
 							>
-								<span class="fi fi-{country.alpha2} mt-1" />
+								<span class="fi fi-{country.alpha2} mt-1"></span>
 								{country.en} - <span class="mt-1 uppercase">{country.alpha2}</span>
 							</ListBoxItem>
 						{/each}

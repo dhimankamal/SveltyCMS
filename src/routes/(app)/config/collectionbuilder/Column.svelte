@@ -32,7 +32,6 @@
 		goto(`/config/collectionbuilder/${item.name}`);
 	}
 
-	export let currentCategories: any;
 
 	// Skeleton
 	import { getModalStore, type ModalComponent, type ModalSettings } from '@skeletonlabs/skeleton';
@@ -73,29 +72,40 @@
 		modalStore.trigger(d);
 	}
 
-	export let name: string;
-	export let items: any;
-	export let icon: string;
-	export let onDrop: any;
+	interface Props {
+		currentCategories: any;
+		name: string;
+		items: any;
+		icon: string;
+		onDrop: any;
+	}
+
+	let {
+		currentCategories,
+		name,
+		items = $bindable(),
+		icon,
+		onDrop
+	}: Props = $props();
 </script>
 
 <div class="relative h-full w-full overflow-hidden">
 	<!-- Column Categories -->
 	<div class="flex h-10 items-center font-bold">
-		<iconify-icon {icon} width="18" />
+		<iconify-icon {icon} width="18"></iconify-icon>
 		<span class="dark:text-primary-500 ltr:ml-2 rtl:mr-2">{name}</span>
 	</div>
 	<div class="absolute top-2 flex ltr:right-1 rtl:left-1">
-		<button class="text-black" on:click={() => editCategory({ name, icon })} aria-label="Edit Category">
-			<iconify-icon icon="mdi:pen" width="18" class="hover:text-error-500 dark:text-white" />
+		<button class="text-black" onclick={() => editCategory({ name, icon })} aria-label="Edit Category">
+			<iconify-icon icon="mdi:pen" width="18" class="hover:text-error-500 dark:text-white"></iconify-icon>
 		</button>
-		<iconify-icon icon="mdi:drag" width="18" class="" />
+		<iconify-icon icon="mdi:drag" width="18" class=""></iconify-icon>
 	</div>
 	<div
 		class="h-[calc(100%-2.5em)] min-h-[1em] overflow-y-scroll ltr:-mr-2 rtl:-ml-2"
 		use:dndzone={{ items: items, flipDurationMs, zoneTabIndex: -1 }}
-		on:consider={handleDndConsiderCards}
-		on:finalize={handleDndFinalizeCards}
+		onconsider={handleDndConsiderCards}
+		onfinalize={handleDndFinalizeCards}
 	>
 		<!-- Column Collections -->
 		{#each items as item (item.id)}
@@ -103,15 +113,15 @@
 				class="my-1 flex h-10 w-full items-center justify-between rounded-sm border border-surface-700 bg-surface-300 py-2 text-center text-xs font-bold hover:bg-surface-400 dark:text-white"
 				animate:flip={{ duration: flipDurationMs }}
 			>
-				<iconify-icon icon="mdi:drag" width="18" class="ltr:pl-0.5 rtl:pr-0.5" />
+				<iconify-icon icon="mdi:drag" width="18" class="ltr:pl-0.5 rtl:pr-0.5"></iconify-icon>
 
 				<span class="break-word flex items-center gap-2">
-					<iconify-icon icon={item.icon} width="18" class="text-error-500" />
+					<iconify-icon icon={item.icon} width="18" class="text-error-500"></iconify-icon>
 					{item.name}
 				</span>
 
-				<button class="btn" on:click={() => handleCollectionClick(item)}>
-					<iconify-icon icon="mdi:pen" width="18" class="text-surface-500 hover:text-error-500" />
+				<button class="btn" onclick={() => handleCollectionClick(item)}>
+					<iconify-icon icon="mdi:pen" width="18" class="text-surface-500 hover:text-error-500"></iconify-icon>
 				</button>
 			</div>
 		{/each}

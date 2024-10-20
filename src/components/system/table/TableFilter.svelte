@@ -9,11 +9,21 @@
 
 	// Define reactive variables to track the state of each element
 
-	export let globalSearchValue = '';
-	export let searchShow = false;
-	export let filterShow = false;
-	export let columnShow = false;
-	export let density = 'normal';
+	interface Props {
+		globalSearchValue?: string;
+		searchShow?: boolean;
+		filterShow?: boolean;
+		columnShow?: boolean;
+		density?: string;
+	}
+
+	let {
+		globalSearchValue = $bindable(''),
+		searchShow = $bindable(false),
+		filterShow = $bindable(false),
+		columnShow = $bindable(false),
+		density = $bindable('normal')
+	}: Props = $props();
 
 	// Define a function to close any open elements
 	function closeOpenStates() {
@@ -33,36 +43,36 @@
 			placeholder="Search..."
 			aria-label="Search for items in the table"
 			bind:value={globalSearchValue}
-			on:keydown={(e) => e.key === 'Enter'}
+			onkeydown={(e) => e.key === 'Enter'}
 			class="input outline-none transition-all duration-500 ease-in-out"
 		/>
 		{#if searchShow}
 			<button
-				on:click={() => {
+				onclick={() => {
 					globalSearchValue = '';
 					searchShow = false;
 				}}
-				on:keydown={(event) => {
+				onkeydown={(event) => {
 					if (event.key === 'Enter' || event.key === ' ') {
 						globalSearchValue = '';
 						searchShow = false;
 					}
 				}}
 				class="variant-filled-surface w-12"
-				><iconify-icon icon="ic:outline-search-off" width="24" />
+				><iconify-icon icon="ic:outline-search-off" width="24"></iconify-icon>
 			</button>
 		{/if}
 	</div>
 {:else}
 	<button
 		type="button"
-		on:click={() => {
+		onclick={() => {
 			closeOpenStates();
 			searchShow = !searchShow;
 		}}
 		class="variant-ghost-surface btn-icon"
 	>
-		<iconify-icon icon="material-symbols:search-rounded" width="24" />
+		<iconify-icon icon="material-symbols:search-rounded" width="24"></iconify-icon>
 	</button>
 {/if}
 
@@ -70,7 +80,7 @@
 	<!-- Filter -->
 	<button
 		type="button"
-		on:click={() => {
+		onclick={() => {
 			if (filterShow) {
 				filterShow = false;
 			} else {
@@ -80,13 +90,13 @@
 		}}
 		class="variant-ghost-surface btn-icon"
 	>
-		<iconify-icon icon="carbon:filter-edit" width="24" />
+		<iconify-icon icon="carbon:filter-edit" width="24"></iconify-icon>
 	</button>
 
 	<!-- Column Order & Visibility -->
 	<button
 		type="button"
-		on:click={() => {
+		onclick={() => {
 			if (columnShow) {
 				columnShow = false;
 			} else {
@@ -96,13 +106,13 @@
 		}}
 		class="variant-ghost-surface btn-icon"
 	>
-		<iconify-icon icon="fluent:column-triple-edit-24-regular" width="24" />
+		<iconify-icon icon="fluent:column-triple-edit-24-regular" width="24"></iconify-icon>
 	</button>
 
 	<!-- Spacing/Density  -->
 	<button
 		type="button"
-		on:click={() => {
+		onclick={() => {
 			closeOpenStates();
 			// Update the density variable
 			if (density === 'compact') {
@@ -122,6 +132,6 @@
 					? 'material-symbols:align-space-around-rounded'
 					: 'material-symbols:align-space-between-rounded'}
 			width="24"
-		/>
+		></iconify-icon>
 	</button>
 {/if}

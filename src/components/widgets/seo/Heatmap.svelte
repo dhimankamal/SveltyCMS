@@ -4,25 +4,25 @@
 -->
 
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { onMount, createEventDispatcher } from 'svelte';
 	import { fade } from 'svelte/transition';
 	import { tick } from 'svelte';
 
-	export let content: string = '';
-	export let language: string = 'en';
-	export let keywords: string[] = [];
-
-	let heatmapData: { word: string; heatLevel: number; isKeyword: boolean }[] = [];
-	let keywordDensity: { [key: string]: number } = {};
-	const dispatch = createEventDispatcher();
-	let debounceTimer: number | undefined;
-
-	$: {
-		clearTimeout(debounceTimer);
-		debounceTimer = window.setTimeout(() => {
-			generateHeatmap();
-		}, 300);
+	interface Props {
+		content?: string;
+		language?: string;
+		keywords?: string[];
 	}
+
+	let { content = '', language = 'en', keywords = [] }: Props = $props();
+
+	let heatmapData: { word: string; heatLevel: number; isKeyword: boolean }[] = $state([]);
+	let keywordDensity: { [key: string]: number } = $state({});
+	const dispatch = createEventDispatcher();
+	let debounceTimer: number | undefined = $state();
+
 
 	async function generateHeatmap() {
 		if (!content) {
@@ -76,6 +76,12 @@
 			{} as { [key: string]: number }
 		);
 	}
+	run(() => {
+		clearTimeout(debounceTimer);
+		debounceTimer = window.setTimeout(() => {
+			generateHeatmap();
+		}, 300);
+	});
 </script>
 
 <div class="heatmap-content">

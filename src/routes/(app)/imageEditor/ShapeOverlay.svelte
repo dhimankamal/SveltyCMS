@@ -8,17 +8,21 @@
 	import Konva from 'konva';
 	import { onMount, createEventDispatcher } from 'svelte';
 
-	export let stage: Konva.Stage;
-	export let layer: Konva.Layer;
+	interface Props {
+		stage: Konva.Stage;
+		layer: Konva.Layer;
+	}
 
-	let shapeType = 'rectangle';
-	let fillColor: string = '#ffffff';
-	let strokeColor: string = '#000000';
-	let strokeWidth = 2;
-	let opacity = 1;
+	let { stage, layer }: Props = $props();
+
+	let shapeType = $state('rectangle');
+	let fillColor: string = $state('#ffffff');
+	let strokeColor: string = $state('#000000');
+	let strokeWidth = $state(2);
+	let opacity = $state(1);
 
 	let shapes: Konva.Shape[] = [];
-	let selectedShape: Konva.Shape | null = null;
+	let selectedShape: Konva.Shape | null = $state(null);
 
 	const dispatch = createEventDispatcher();
 
@@ -139,7 +143,7 @@
 <div class="wrapper">
 	<h3 class=" relative text-center text-lg font-bold text-tertiary-500 dark:text-primary-500">Shape Overlay</h3>
 
-	<button on:click={exitShapeOverlay} class="variant-ghost-primary btn-icon absolute -top-2 right-2 font-bold"> Exit </button>
+	<button onclick={exitShapeOverlay} class="variant-ghost-primary btn-icon absolute -top-2 right-2 font-bold"> Exit </button>
 
 	<div class="grid grid-cols-2 gap-2">
 		<label class="flex flex-col">
@@ -154,30 +158,30 @@
 		<div class="flex items-center justify-around gap-2">
 			<label class="flex flex-col">
 				<span class="mb-1">Fill Color:</span>
-				<input type="color" bind:value={fillColor} on:input={updateSelectedShape} class="input" />
+				<input type="color" bind:value={fillColor} oninput={updateSelectedShape} class="input" />
 			</label>
 
 			<label class="flex flex-col">
 				<span class="mb-1">Stroke Color:</span>
-				<input type="color" bind:value={strokeColor} on:input={updateSelectedShape} class="input" />
+				<input type="color" bind:value={strokeColor} oninput={updateSelectedShape} class="input" />
 			</label>
 		</div>
 
 		<label class="flex flex-col">
 			<span class="mb-1">Stroke Width: {strokeWidth}px</span>
-			<input type="range" min="0" max="20" step="1" bind:value={strokeWidth} on:input={updateSelectedShape} class="input" />
+			<input type="range" min="0" max="20" step="1" bind:value={strokeWidth} oninput={updateSelectedShape} class="input" />
 		</label>
 
 		<label class="flex flex-col">
 			<span class="mb-1">Opacity: {opacity.toFixed(2)}</span>
-			<input type="range" min="0" max="1" step="0.01" bind:value={opacity} on:input={updateSelectedShape} class=" input" />
+			<input type="range" min="0" max="1" step="0.01" bind:value={opacity} oninput={updateSelectedShape} class=" input" />
 		</label>
 	</div>
 
 	<div class="mt-4 flex justify-between space-x-2">
-		<button on:click={addShape} class="variant-filled-primary btn w-full">Add Shape</button>
-		<button on:click={deleteSelectedShape} class="variant-filled-error btn w-full" disabled={!selectedShape}>Delete</button>
-		<button on:click={bringToFront} class="variant-outline btn w-full" disabled={!selectedShape}>Bring to Front</button>
-		<button on:click={sendToBack} class="variant-outline btn w-full" disabled={!selectedShape}>Send to Back</button>
+		<button onclick={addShape} class="variant-filled-primary btn w-full">Add Shape</button>
+		<button onclick={deleteSelectedShape} class="variant-filled-error btn w-full" disabled={!selectedShape}>Delete</button>
+		<button onclick={bringToFront} class="variant-outline btn w-full" disabled={!selectedShape}>Bring to Front</button>
+		<button onclick={sendToBack} class="variant-outline btn w-full" disabled={!selectedShape}>Send to Back</button>
 	</div>
 </div>

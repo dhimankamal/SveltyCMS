@@ -17,8 +17,12 @@ Key features:
 	import { formatBytes } from '@utils/utils';
 	import { getMediaUrl } from '@utils/media/mediaUtils';
 
-	export let filteredFiles;
-	export let tableSize;
+	interface Props {
+		filteredFiles: any;
+		tableSize: any;
+	}
+
+	let { filteredFiles = $bindable(), tableSize }: Props = $props();
 
 	const dispatch = createEventDispatcher();
 
@@ -27,8 +31,8 @@ Key features:
 	}
 
 	// Sorting functionality
-	let sortColumn = 'name';
-	let sortOrder = 1; // 1 for ascending, -1 for descending
+	let sortColumn = $state('name');
+	let sortOrder = $state(1); // 1 for ascending, -1 for descending
 
 	function sort(column) {
 		if (sortColumn === column) {
@@ -53,13 +57,13 @@ Key features:
 		<thead class="bg-surface-100-800-token sticky top-0 text-tertiary-500 dark:text-primary-500">
 			<tr class="divide-x divide-surface-400 border-b border-black dark:border-white">
 				<th>Thumbnail</th>
-				<th on:click={() => sort('name')}>
+				<th onclick={() => sort('name')}>
 					Name {sortColumn === 'name' ? (sortOrder === 1 ? '▲' : '▼') : ''}
 				</th>
-				<th on:click={() => sort('size')}>
+				<th onclick={() => sort('size')}>
 					Size {sortColumn === 'size' ? (sortOrder === 1 ? '▲' : '▼') : ''}
 				</th>
-				<th on:click={() => sort('type')}>
+				<th onclick={() => sort('type')}>
 					Type {sortColumn === 'type' ? (sortOrder === 1 ? '▲' : '▼') : ''}
 				</th>
 				<th>Path</th>
@@ -81,7 +85,7 @@ Key features:
 					<td>{file.type || 'Unknown'}</td>
 					<td>{file.path}</td>
 					<td>
-						<button class="variant-filled-primary btn btn-sm" on:click={() => handleDelete(file)}> Delete </button>
+						<button class="variant-filled-primary btn btn-sm" onclick={() => handleDelete(file)}> Delete </button>
 					</td>
 				</tr>
 			{/each}

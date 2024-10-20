@@ -1,8 +1,18 @@
+<!--
+@file src/routes/login/components/icons/SigninIcon.svelte
+@description - Dynamic SigninIcon component
+-->
+
 <script lang="ts">
 	// ParaglideJS
 	import * as m from '@src/paraglide/messages';
 
-	export let show = true;
+	// Props
+	interface Props {
+		show?: boolean;
+	}
+
+	let { show = true }: Props = $props();
 </script>
 
 <div

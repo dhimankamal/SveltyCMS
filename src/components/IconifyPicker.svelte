@@ -10,17 +10,21 @@
 	// Import loadIcons function from Iconify Svelte library
 	import { loadIcons } from '@iconify/svelte';
 
-	let icons = []; // array of icon names
-	let start = 0; // Declare a variable for the start index and initialize it to 0
-	let selectedLibrary = 'ic'; // Default library is 'ic - Google Material Icons'
-	let librariesLoaded = false;
-	let iconLibraries = {};
-	let page = 0; // Initialize page counter
-	let showDropdown = false;
+	let icons = $state([]); // array of icon names
+	let start = $state(0); // Declare a variable for the start index and initialize it to 0
+	let selectedLibrary = $state('ic'); // Default library is 'ic - Google Material Icons'
+	let librariesLoaded = $state(false);
+	let iconLibraries = $state({});
+	let page = $state(0); // Initialize page counter
+	let showDropdown = $state(false);
 
 	export const icon: string = '';
-	export let iconselected: string;
-	export let searchQuery: string = '';
+	interface Props {
+		iconselected: string;
+		searchQuery?: string;
+	}
+
+	let { iconselected = $bindable(), searchQuery = $bindable('') }: Props = $props();
 
 	// function to fetch icons from Iconify API
 	async function searchIcons(query: string, libraryCategory: string) {
@@ -102,14 +106,14 @@
 	{#if iconselected}
 		<div class="-mt-3 mb-1 flex items-center justify-start gap-2">
 			<div class="flex items-center gap-3 p-2">
-				<iconify-icon icon={iconselected} width="30" class="py-2 text-tertiary-500" />
+				<iconify-icon icon={iconselected} width="30" class="py-2 text-tertiary-500"></iconify-icon>
 				<p>
 					{m.iconpicker_name()}
 					<span class="text-tertiary-500 dark:text-primary-500">{iconselected}</span>
 				</p>
 			</div>
-			<button class="variant-ghost btn-icon" type="button" on:mouseup={removeIcon}>
-				<iconify-icon icon="icomoon-free:bin" width="22" />
+			<button class="variant-ghost btn-icon" type="button" aria-label="Remove Icon" onmouseup={removeIcon}>
+				<iconify-icon icon="icomoon-free:bin" width="22"></iconify-icon>
 			</button>
 		</div>
 	{/if}
@@ -121,8 +125,8 @@
 		bind:value={searchQuery}
 		placeholder={iconselected ? `Replace Icon:    ${iconselected}` : m.iconpicker_placeholder()}
 		class="input w-full text-black dark:text-primary-500"
-		on:input={() => searchIcons(searchQuery, selectedLibrary)}
-		on:focus={showLibrariesAndDropdown}
+		oninput={() => searchIcons(searchQuery, selectedLibrary)}
+		onfocus={showLibrariesAndDropdown}
 	/>
 
 	<!-- dropdown section -->
@@ -132,8 +136,8 @@
 			<div class="mb-2">
 				<select
 					bind:value={selectedLibrary}
-					on:click={getIconLibraries}
-					on:change={() => {
+					onclick={getIconLibraries}
+					onchange={() => {
 						start = 0;
 						searchIcons(searchQuery, selectedLibrary);
 					}}
@@ -151,15 +155,15 @@
 
 			<!-- Render your dropdown content here -->
 			{#each icons as icon}
-				<button on:click={() => selectIcon(icon)}>
-					<iconify-icon {icon} width="24" class="hover:rounded hover:bg-primary-500" />
+				<button onclick={() => selectIcon(icon)} aria-label={icon}>
+					<iconify-icon {icon} width="24" class="hover:rounded hover:bg-primary-500"></iconify-icon>
 				</button>
 			{/each}
 
 			<!-- Pagination buttons -->
 			{#if icons.length > 0}
 				<div class="mt-2 flex justify-between">
-					<button disabled={start === 0} on:click={prevPage} class={`${page === 0 ? 'hidden' : 'block'} variant-filled-primary btn-sm rounded`}
+					<button disabled={start === 0} onclick={prevPage} class={`${page === 0 ? 'hidden' : 'block'} variant-filled-primary btn-sm rounded`}
 						>{m.button_previous()}
 					</button>
 
@@ -168,7 +172,7 @@
 					</div>
 					<button
 						disabled={icons.length < 50}
-						on:click={nextPage}
+						onclick={nextPage}
 						class={`${icons.length < 50 ? 'hidden' : 'block'} variant-filled-primary btn-sm rounded`}>{m.button_next()}</button
 					>
 				</div>

@@ -64,17 +64,15 @@
 	import * as m from '@src/paraglide/messages';
 	import { languageTag } from '@src/paraglide/runtime';
 
-	let _languageTag = languageTag(); // Get the current language tag
+	let _languageTag = $state(languageTag()); // Get the current language tag
 
 	function handleLocaleChange(event: any) {
 		$systemLanguage = event.target.value;
 	}
 	const inputlangeuagevalue = '';
-	$: filteredLanguages = publicEnv.AVAILABLE_SYSTEM_LANGUAGES.filter((value) => (value ? value.includes(inputlangeuagevalue) : true));
+	let filteredLanguages = $derived(publicEnv.AVAILABLE_SYSTEM_LANGUAGES.filter((value) => (value ? value.includes(inputlangeuagevalue) : true)));
 
-	let handleClick: any;
-
-	$: handleClick = () => {
+	let handleClick: any = $derived(() => {
 		if (!$page.url.href.includes('user')) {
 			mode.set('view');
 			handleSidebarToggle();
@@ -83,7 +81,9 @@
 		if (get(screenSize) === 'sm') {
 			toggleSidebar('left', 'hidden'); // Hide the left sidebar on mobile
 		}
-	};
+	});
+
+	
 
 	// SignOut function
 	async function signOut() {
@@ -157,8 +157,8 @@
 	{:else}
 		<!-- Corporate Identity Collapsed-->
 		<div class="gap flex justify-start">
-			<button type="button" on:click={() => toggleSidebar('left', 'hidden')} class="variant-ghost-surface btn-icon mt-1">
-				<iconify-icon icon="mingcute:menu-fill" width="24" />
+			<button type="button" onclick={() => toggleSidebar('left', 'hidden')} class="variant-ghost-surface btn-icon mt-1">
+				<iconify-icon icon="mingcute:menu-fill" width="24"></iconify-icon>
 			</button>
 
 			<a href="/" aria-label="SveltyCMS Logo" class="flex justify-center pt-2 !no-underline">
@@ -171,7 +171,7 @@
 	<button
 		type="button"
 		class="absolute top-2 z-20 flex items-center justify-center !rounded-full border-[3px] dark:border-black ltr:-right-3 rtl:-left-3"
-		on:click={() => {
+		onclick={() => {
 			toggleSidebar('left', $sidebarState.left === 'full' ? 'collapsed' : 'full');
 			userPreferredState.set($sidebarState.left === 'full' ? 'collapsed' : 'full');
 		}}
@@ -180,7 +180,7 @@
 			icon="bi:arrow-left-circle-fill"
 			width="30"
 			class={`rounded-full bg-surface-500 text-white hover:cursor-pointer hover:bg-error-600 dark:bg-white dark:text-surface-600 dark:hover:bg-error-600 ${$sidebarState.left === 'full' ? 'rotate-0 rtl:rotate-180' : 'rotate-180 rtl:rotate-0'}`}
-		/>
+		></iconify-icon>
 	</button>
 
 	<!--SideBar Middle -->
@@ -188,15 +188,15 @@
 
 	<!-- Sidebar Left Footer -->
 	<div class="mb-2 mt-auto bg-white dark:bg-gradient-to-r dark:from-surface-700 dark:to-surface-900">
-		<div class="mx-1 mb-1 border-0 border-t border-surface-400" />
+		<div class="mx-1 mb-1 border-0 border-t border-surface-400"></div>
 
 		<div class="{$sidebarState.left === 'full' ? 'grid-cols-3 grid-rows-3' : 'grid-cols-2 grid-rows-2'} grid items-center justify-center">
 			<!-- Avatar with user settings -->
 			<div class={$sidebarState.left === 'full' ? 'order-1 row-span-2' : 'order-1'}>
 				<button
 					use:popup={UserTooltip}
-					on:click={handleClick}
-					on:keypress={handleClick}
+					onclick={handleClick}
+					onkeypress={handleClick}
 					class="btn-icon relative cursor-pointer flex-col items-center justify-center text-center !no-underline md:row-span-2"
 				>
 					<Avatar
@@ -219,7 +219,7 @@
 				<!-- Popup Tooltip with the arrow element -->
 				<div class="card variant-filled z-50 max-w-sm p-2" data-popup="User">
 					{m.applayout_userprofile()}
-					<div class="variant-filled arrow" />
+					<div class="variant-filled arrow"></div>
 				</div>
 			</div>
 
@@ -227,7 +227,7 @@
 			<div class={$sidebarState.left === 'full' ? 'order-3 row-span-2  ' : 'order-2'} use:popup={SystemLanguageTooltip}>
 				<select
 					bind:value={_languageTag}
-					on:change={handleLocaleChange}
+					onchange={handleLocaleChange}
 					class="variant-filled-surface !appearance-none rounded-full uppercase text-white {$sidebarState.left === 'full'
 						? 'btn-icon px-2.5 py-2'
 						: 'btn-icon-sm px-1.5 py-0'}"
@@ -240,7 +240,7 @@
 				<!-- Popup Tooltip with the arrow element -->
 				<div class="card variant-filled z-50 max-w-sm p-2" data-popup="SystemLanguage">
 					{m.applayout_systemlanguage()}
-					<div class="variant-filled arrow" />
+					<div class="variant-filled arrow"></div>
 				</div>
 			</div>
 
@@ -248,34 +248,34 @@
 			<div class={$sidebarState.left === 'full' ? 'order-2' : 'order-3'}>
 				<button
 					use:popup={SwitchThemeTooltip}
-					on:click={toggleTheme}
+					onclick={toggleTheme}
 					aria-label="Toggle Theme"
 					class="btn-icon hover:bg-surface-500 hover:text-white"
 				>
 					{#if !$modeCurrent}
-						<iconify-icon icon="bi:sun" width="22" />
+						<iconify-icon icon="bi:sun" width="22"></iconify-icon>
 					{:else}
-						<iconify-icon icon="bi:moon-fill" width="22" />
+						<iconify-icon icon="bi:moon-fill" width="22"></iconify-icon>
 					{/if}
 				</button>
 
 				<!-- Popup Tooltip with the arrow element -->
 				<div class="card variant-filled z-50 max-w-sm p-2" data-popup="SwitchTheme">
 					{m.applayout_switchmode({ $modeCurrent: !$modeCurrent ? 'Light' : 'Dark' })}
-					<div class="variant-filled arrow" />
+					<div class="variant-filled arrow"></div>
 				</div>
 			</div>
 
 			<!-- Sign Out -->
 			<div class={$sidebarState.left === 'full' ? 'order-4' : 'order-4'}>
-				<button use:popup={SignOutTooltip} on:click={signOut} type="submit" value="Sign out" class="btn-icon hover:bg-surface-500 hover:text-white">
-					<iconify-icon icon="uil:signout" width="26" />
+				<button use:popup={SignOutTooltip} onclick={signOut} type="submit" value="Sign out" class="btn-icon hover:bg-surface-500 hover:text-white">
+					<iconify-icon icon="uil:signout" width="26"></iconify-icon>
 				</button>
 
 				<!-- Popup Tooltip with the arrow element -->
 				<div class="card variant-filled z-50 max-w-sm p-2" data-popup="SignOutButton">
 					{m.applayout_signout()}
-					<div class="variant-filled arrow" />
+					<div class="variant-filled arrow"></div>
 				</div>
 			</div>
 
@@ -284,7 +284,7 @@
 				<button
 					class="btn-icon pt-1.5 hover:bg-surface-500 hover:text-white"
 					use:popup={ConfigTooltip}
-					on:click={() => {
+					onclick={() => {
 						mode.set('view');
 						handleSidebarToggle();
 						if (get(screenSize) === 'sm') {
@@ -293,14 +293,14 @@
 					}}
 				>
 					<a href="/config">
-						<iconify-icon icon="material-symbols:build-circle" width="32" />
+						<iconify-icon icon="material-symbols:build-circle" width="32"></iconify-icon>
 					</a>
 				</button>
 
 				<!-- Popup Tooltip with the arrow element -->
 				<div class="card variant-filled z-50 max-w-sm p-2" data-popup="Config">
 					{m.applayout_systemconfiguration()}
-					<div class="variant-filled arrow" />
+					<div class="variant-filled arrow"></div>
 				</div>
 			</div>
 
@@ -308,13 +308,13 @@
 			<div class="{$sidebarState.left === 'full' ? 'order-7' : 'order-7 hidden'} ">
 				<a href="https://github.com/SveltyCMS/SveltyCMS/discussions" target="blank">
 					<button use:popup={GithubTooltip} class="btn-icon hover:bg-surface-500 hover:text-white">
-						<iconify-icon icon="grommet-icons:github" width="30" />
+						<iconify-icon icon="grommet-icons:github" width="30"></iconify-icon>
 					</button>
 
 					<!-- Popup Tooltip with the arrow element -->
 					<div class="card variant-filled z-50 max-w-sm p-2" data-popup="Github">
 						{m.applayout_githubdiscussion()}
-						<div class="variant-filled arrow" />
+						<div class="variant-filled arrow"></div>
 					</div>
 				</a>
 			</div>
